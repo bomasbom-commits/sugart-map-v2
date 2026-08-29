@@ -71,7 +71,27 @@
     .leaflet-popup-content td:first-child { background-color: #f2f7fc; font-weight: bold; width: 40%; color: #333; }
     .leaflet-popup-content td:nth-child(2) { color: #111; word-break: break-all; }
 
-    /* ===== สไตล์แถบไม้บรรทัดวัดระยะทาง ===== */
+    /* ปุ่มวัดระยะใน Popup */
+    .btn-measure-popup {
+      margin-top: 8px;
+      width: 100%;
+      background: #E91E63;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-measure-popup:hover { background: #C2185B; }
+
+    /* แถบไม้บรรทัดวัดระยะทาง */
     .leaflet-control-measure {
       background: #ffffff;
       border-radius: 6px;
@@ -111,7 +131,6 @@
       font-size: 13px;
       font-weight: 500;
       box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-      display: none;
       align-items: center;
       gap: 12px;
     }
@@ -137,6 +156,12 @@
     }
     .measure-tooltip:before { border-top-color: rgba(233, 30, 99, 0.9); }
 
+    /* ปิดการรับคลิกของแปลงตอนวัดระยะ เพื่อให้คลิกทะลุไปลงบนแผนที่และวัดต่อได้ */
+    .measuring-mode .leaflet-interactive {
+      pointer-events: none !important;
+      cursor: crosshair !important;
+    }
+
     @media (max-width: 768px) {
       .mobile-menu-btn { display: block; }
       .btn-close-sidebar { display: block; }
@@ -151,9 +176,9 @@
   <button id="mobileMenuBtn" class="mobile-menu-btn">📂 กลุ่มคิว / ค้นหา</button>
   <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-  <!-- แถบข้อความแจ้งเตือนขณะใช้เครื่องมือวัดระยะทาง -->
+  <!-- แถบข้อความแจ้งเตือนขณะวัดระยะทาง -->
   <div id="measurePanel" class="measure-panel">
-    <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b> (คลิกแผนที่เพื่อปักจุด)</span>
+    <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b> (คลิกแผนที่/แปลงเพื่อปักจุดต่อ)</span>
     <button id="btnClearMeasure">ล้างค่า</button>
     <button id="btnExitMeasure" style="background:#555;">ปิด</button>
   </div>
@@ -271,7 +296,6 @@
     const measurePanel = document.getElementById('measurePanel');
     const measureTotalDist = document.getElementById('measureTotalDist');
 
-    // สร้างปุ่มไม้บรรทัดบน Control ด้านขวา
     const MeasureControl = L.Control.extend({
       options: { position: 'topright' },
       onAdd: function() {
@@ -291,15 +315,17 @@
     function toggleMeasureMode() {
       isMeasuring = !isMeasuring;
       const btn = document.getElementById('measureToggleBtn');
+      const mapContainer = map.getContainer();
+
       if (isMeasuring) {
         btn.classList.add('active');
         measurePanel.style.display = 'flex';
-        map.getContainer().style.cursor = 'crosshair';
+        mapContainer.classList.add('measuring-mode');
         map.closePopup();
       } else {
         btn.classList.remove('active');
         measurePanel.style.display = 'none';
-        map.getContainer().style.cursor = '';
+        mapContainer.classList.remove('measuring-mode');
         clearMeasure();
       }
     }
@@ -319,13 +345,9 @@
       return total;
     }
 
-    map.on('click', function(e) {
-      if (!isMeasuring) return;
-
-      const latlng = e.latlng;
+    function addMeasurePoint(latlng, labelText) {
       measurePoints.push(latlng);
 
-      // สร้างจุด Marker เล็กๆ
       const marker = L.circleMarker(latlng, {
         radius: 5,
         color: '#E91E63',
@@ -348,18 +370,33 @@
           opacity: 0.95
         }).addTo(map);
 
-        marker.bindTooltip(formatDistance(totalDist), {
+        marker.bindTooltip(labelText || formatDistance(totalDist), {
           permanent: true,
           direction: 'top',
           className: 'measure-tooltip'
         }).openTooltip();
       } else {
-        marker.bindTooltip("จุดเริ่มต้น", {
+        marker.bindTooltip(labelText || "จุดเริ่มต้น", {
           permanent: true,
           direction: 'top',
           className: 'measure-tooltip'
         }).openTooltip();
       }
+    }
+
+    window.startMeasureFromPlot = function(lat, lng, plotName) {
+      if (!isMeasuring) {
+        toggleMeasureMode();
+      } else {
+        clearMeasure();
+      }
+      map.closePopup();
+      addMeasurePoint(L.latLng(lat, lng), `เริ่มต้น: ${plotName}`);
+    };
+
+    map.on('click', function(e) {
+      if (!isMeasuring) return;
+      addMeasurePoint(e.latlng);
     });
 
     function clearMeasure() {
@@ -379,10 +416,24 @@
     /* =========================================================
        ระบบอ่านข้อมูล KML และแสดงผลแปลง
        ========================================================= */
-    function createPopupContent(name, groupName, subGroup, color, props) {
+    function getPlotCenterLatLng(layer) {
+      if (layer.getBounds && layer.getBounds().isValid()) {
+        return layer.getBounds().getCenter();
+      } else if (layer.getLatLng) {
+        return layer.getLatLng();
+      }
+      return null;
+    }
+
+    function createPopupContent(name, groupName, subGroup, color, props, centerLatLng) {
       let content = `<div style="font-size: 13px;">`;
       content += `<strong style="font-size: 15px; color: ${color};">📍 รหัสแปลง: ${name}</strong><br/>`;
       content += `<span style="font-size: 12px; color: #555;"><b>กลุ่ม:</b> ${groupName} | <b>กลุ่มย่อย:</b> ${subGroup}</span>`;
+      
+      if (centerLatLng) {
+        content += `<button class="btn-measure-popup" onclick="startMeasureFromPlot(${centerLatLng.lat}, ${centerLatLng.lng}, '${name}')">📏 วัดระยะทางจากแปลงนี้</button>`;
+      }
+      
       content += `<hr style="margin: 8px 0; border: none; border-top: 1px solid #e0e0e0;"/>`;
 
       const ignoredKeys = [
@@ -496,13 +547,8 @@
           style: { color: color, weight: 2, opacity: 0.9, fillColor: color, fillOpacity: 0.35 },
           pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5, fillColor: color, color: '#FFF', weight: 1, fillOpacity: 0.9 }),
           onEachFeature: (f, l) => { 
-            l.bindPopup(createPopupContent(plotName, mainGroup, subGroup, color, props)); 
-            l.on('click', (e) => {
-              // หากอยู่ในโหมดวัดระยะทาง ไม่เปิด Popup กวนการวัด
-              if (isMeasuring) {
-                l.closePopup();
-              }
-            });
+            const center = getPlotCenterLatLng(l);
+            l.bindPopup(createPopupContent(plotName, mainGroup, subGroup, color, props, center)); 
           }
         });
 
@@ -530,7 +576,8 @@
           if (plot.layer.setStyle) {
             plot.layer.setStyle({ color: newColor, fillColor: newColor });
           }
-          plot.layer.bindPopup(createPopupContent(plot.name, plot.mainGroup, plot.subGroup, newColor, plot.props));
+          const center = getPlotCenterLatLng(plot.layer);
+          plot.layer.bindPopup(createPopupContent(plot.name, plot.mainGroup, plot.subGroup, newColor, plot.props, center));
         });
       }
     }
