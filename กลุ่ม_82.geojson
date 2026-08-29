@@ -1,6 +1,6 @@
 {
 "type": "FeatureCollection",
-"name": "กลุ่ม_กลุ่ม_82",
+"name": "กลุ่ม_82",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32647" } },
 "xy_coordinate_resolution": 1e-15,
 "features": [
