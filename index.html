@@ -97,7 +97,7 @@
     <div class="sidebar-content">
       <div id="errorMessage">
         ⚠️ <b>โหลดแผนที่ไม่ได้ (0 แปลง)</b><br>
-        ระบบค้นหาไฟล์ไม่เจอ ให้ตรวจสอบว่าเปิดผ่านเว็บไซต์ (GitHub) แล้วหรือไม่
+        ระบบค้นหาไฟล์ไม่เจอ ให้ตรวจสอบว่าเปิดผ่านเว็บเซิร์ฟเวอร์ (GitHub Pages หรือ Live Server) แล้วหรือไม่
       </div>
 
       <div id="progressContainer" class="progress-box">
@@ -132,29 +132,31 @@
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- toGeoJSON สำหรับแปลงไฟล์ KML เป็น GeoJSON -->
+  <script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
 
   <script>
-    // รายชื่อไฟล์ GeoJSON ที่วางอยู่หน้าแรกของ GitHub ตรงกันเป๊ะ
-    const geojsonFiles = [
-      'กลุ่ม_02.geojson',
-      'กลุ่ม_11.geojson',
-      'กลุ่ม_15.geojson',
-      'กลุ่ม_21.geojson',
-      'กลุ่ม_22.geojson',
-      'กลุ่ม_23.geojson',
-      'กลุ่ม_31.geojson',
-      'กลุ่ม_42.geojson',
-      'กลุ่ม_43.geojson',
-      'กลุ่ม_45.geojson',
-      'กลุ่ม_51.geojson',
-      'กลุ่ม_61.geojson',
-      'กลุ่ม_62.geojson',
-      'กลุ่ม_63.geojson',
-      'กลุ่ม_64.geojson',
-      'กลุ่ม_71.geojson',
-      'กลุ่ม_72.geojson',
-      'กลุ่ม_82.geojson',
-      'กลุ่ม_83.geojson'
+    // รายชื่อไฟล์ KML ตามโฟลเดอร์
+    const kmlFiles = [
+      'กลุ่มคิว_02.kml',
+      'กลุ่มคิว_11.kml',
+      'กลุ่มคิว_15.kml',
+      'กลุ่มคิว_21.kml',
+      'กลุ่มคิว_22.kml',
+      'กลุ่มคิว_23.kml',
+      'กลุ่มคิว_31.kml',
+      'กลุ่มคิว_42.kml',
+      'กลุ่มคิว_43.kml',
+      'กลุ่มคิว_45.kml',
+      'กลุ่มคิว_51.kml',
+      'กลุ่มคิว_61.kml',
+      'กลุ่มคิว_62.kml',
+      'กลุ่มคิว_63.kml',
+      'กลุ่มคิว_64.kml',
+      'กลุ่มคิว_71.kml',
+      'กลุ่มคิว_72.kml',
+      'กลุ่มคิว_82.kml',
+      'กลุ่มคิว_83.kml'
     ];
 
     const palette = [
@@ -196,7 +198,7 @@
 
       let rows = '';
       for (const [key, val] of Object.entries(props)) {
-        if (!['name', 'description', 'main_grp', 'sub_grp', 'styleUrl'].includes(key) && val !== null && val !== undefined && val !== '') {
+        if (!['name', 'description', 'main_grp', 'sub_grp', 'styleUrl', 'styleHash', 'stroke', 'fill'].includes(key) && val !== null && val !== undefined && val !== '') {
           rows += `<tr><td>${key}</td><td>${val}</td></tr>`;
         }
       }
@@ -206,7 +208,7 @@
     }
 
     function processGeoJson(geojsonData, defaultFileName) {
-      let fallbackName = defaultFileName.split('/').pop().replace('.geojson', '');
+      let fallbackName = defaultFileName.split('/').pop().replace(/\.kml$/i, '');
       let numMatchFile = fallbackName.match(/\d+/);
       let fallbackMainGroup = numMatchFile ? `กลุ่มคิว ${numMatchFile[0]}` : fallbackName;
 
@@ -426,7 +428,7 @@
       if (layer.setStyle) { layer.setStyle({ color: '#FFD600', weight: 5, fillOpacity: 0.75 }); setTimeout(() => { layer.setStyle({ color: plot.color, weight: 2, opacity: 0.9, fillColor: plot.color, fillOpacity: 0.35 }); }, 2000); }
     }
 
-    async function loadAllGeoJsonFiles() {
+    async function loadAllKmlFiles() {
       const pLabel = document.getElementById('progressLabel'), pPercent = document.getElementById('progressPercent'), pBar = document.getElementById('progressBar'), pBox = document.getElementById('progressContainer');
       let successCount = 0;
 
@@ -436,15 +438,17 @@
         return;
       }
 
-      for (let i = 0; i < geojsonFiles.length; i++) {
-        const filePath = geojsonFiles[i];
-        const pct = Math.round(((i + 1) / geojsonFiles.length) * 100);
-        pLabel.innerText = `กำลังโหลดข้อมูลกลุ่มที่ ${i + 1}/${geojsonFiles.length}`; pPercent.innerText = `${pct}%`; pBar.style.width = `${pct}%`;
+      for (let i = 0; i < kmlFiles.length; i++) {
+        const filePath = kmlFiles[i];
+        const pct = Math.round(((i + 1) / kmlFiles.length) * 100);
+        pLabel.innerText = `กำลังโหลดข้อมูลกลุ่มที่ ${i + 1}/${kmlFiles.length}`; pPercent.innerText = `${pct}%`; pBar.style.width = `${pct}%`;
 
         try {
           const response = await fetch(encodeURI(filePath));
           if (response.ok) {
-            const geojson = await response.json();
+            const kmlText = await response.text();
+            const dom = new DOMParser().parseFromString(kmlText, 'text/xml');
+            const geojson = toGeoJSON.kml(dom);
             processGeoJson(geojson, filePath);
             successCount++;
           }
@@ -492,7 +496,7 @@
 
     document.addEventListener('click', (e) => { if (!e.target.closest('.search-box')) searchDropdown.style.display = 'none'; });
 
-    loadAllGeoJsonFiles();
+    loadAllKmlFiles();
   </script>
 </body>
 </html>
