@@ -71,6 +71,72 @@
     .leaflet-popup-content td:first-child { background-color: #f2f7fc; font-weight: bold; width: 40%; color: #333; }
     .leaflet-popup-content td:nth-child(2) { color: #111; word-break: break-all; }
 
+    /* ===== สไตล์แถบไม้บรรทัดวัดระยะทาง ===== */
+    .leaflet-control-measure {
+      background: #ffffff;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      border: 1px solid #ccc;
+    }
+    .measure-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      font-size: 17px;
+      background: white;
+      border: none;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .measure-btn:hover { background: #f0f4f8; }
+    .measure-btn.active {
+      background: #e91e63;
+      color: white;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
+    }
+    .measure-panel {
+      display: none;
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1200;
+      background: rgba(33, 33, 33, 0.9);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+    .measure-panel button {
+      background: #e91e63;
+      color: white;
+      border: none;
+      padding: 3px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .measure-panel button:hover { background: #c2185b; }
+    .measure-tooltip {
+      background: rgba(233, 30, 99, 0.9);
+      border: 1px solid #ffffff;
+      color: white;
+      font-weight: bold;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .measure-tooltip:before { border-top-color: rgba(233, 30, 99, 0.9); }
+
     @media (max-width: 768px) {
       .mobile-menu-btn { display: block; }
       .btn-close-sidebar { display: block; }
@@ -84,6 +150,13 @@
 
   <button id="mobileMenuBtn" class="mobile-menu-btn">📂 กลุ่มคิว / ค้นหา</button>
   <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+  <!-- แถบข้อความแจ้งเตือนขณะใช้เครื่องมือวัดระยะทาง -->
+  <div id="measurePanel" class="measure-panel">
+    <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b> (คลิกแผนที่เพื่อปักจุด)</span>
+    <button id="btnClearMeasure">ล้างค่า</button>
+    <button id="btnExitMeasure" style="background:#555;">ปิด</button>
+  </div>
 
   <div id="sidebar">
     <div class="sidebar-header">
@@ -135,7 +208,6 @@
   <script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
 
   <script>
-    // รายชื่อไฟล์ KML ตรงตามชื่อไฟล์จริง
     const kmlFiles = [
       'กลุ่มคิว_02.kml',
       'กลุ่มคิว_11.kml',
@@ -189,6 +261,124 @@
     function closeMobileSidebar() { sidebar.classList.remove('active'); overlay.classList.remove('active'); setTimeout(() => map.invalidateSize(), 300); }
     btnOpen.addEventListener('click', openMobileSidebar); btnClose.addEventListener('click', closeMobileSidebar); overlay.addEventListener('click', closeMobileSidebar);
 
+    /* =========================================================
+       ระบบไม้บรรทัดวัดระยะทาง (Measure Tool)
+       ========================================================= */
+    let isMeasuring = false;
+    let measurePoints = [];
+    let measureMarkers = [];
+    let measureLine = null;
+    const measurePanel = document.getElementById('measurePanel');
+    const measureTotalDist = document.getElementById('measureTotalDist');
+
+    // สร้างปุ่มไม้บรรทัดบน Control ด้านขวา
+    const MeasureControl = L.Control.extend({
+      options: { position: 'topright' },
+      onAdd: function() {
+        const container = L.DomUtil.create('div', 'leaflet-control-measure leaflet-bar');
+        const btn = L.DomUtil.create('button', 'measure-btn', container);
+        btn.id = 'measureToggleBtn';
+        btn.title = 'ไม้บรรทัดวัดระยะทาง';
+        btn.innerHTML = '📏';
+
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.on(btn, 'click', toggleMeasureMode);
+        return container;
+      }
+    });
+    map.addControl(new MeasureControl());
+
+    function toggleMeasureMode() {
+      isMeasuring = !isMeasuring;
+      const btn = document.getElementById('measureToggleBtn');
+      if (isMeasuring) {
+        btn.classList.add('active');
+        measurePanel.style.display = 'flex';
+        map.getContainer().style.cursor = 'crosshair';
+        map.closePopup();
+      } else {
+        btn.classList.remove('active');
+        measurePanel.style.display = 'none';
+        map.getContainer().style.cursor = '';
+        clearMeasure();
+      }
+    }
+
+    function formatDistance(meters) {
+      if (meters >= 1000) {
+        return (meters / 1000).toFixed(2) + ' กม.';
+      }
+      return Math.round(meters) + ' ม.';
+    }
+
+    function calculateTotalDistance() {
+      let total = 0;
+      for (let i = 0; i < measurePoints.length - 1; i++) {
+        total += measurePoints[i].distanceTo(measurePoints[i + 1]);
+      }
+      return total;
+    }
+
+    map.on('click', function(e) {
+      if (!isMeasuring) return;
+
+      const latlng = e.latlng;
+      measurePoints.push(latlng);
+
+      // สร้างจุด Marker เล็กๆ
+      const marker = L.circleMarker(latlng, {
+        radius: 5,
+        color: '#E91E63',
+        fillColor: '#FFFFFF',
+        fillOpacity: 1,
+        weight: 2
+      }).addTo(map);
+      measureMarkers.push(marker);
+
+      const totalDist = calculateTotalDistance();
+      measureTotalDist.innerText = formatDistance(totalDist);
+
+      if (measurePoints.length > 1) {
+        if (measureLine) map.removeLayer(measureLine);
+
+        measureLine = L.polyline(measurePoints, {
+          color: '#E91E63',
+          weight: 3.5,
+          dashArray: '6, 8',
+          opacity: 0.95
+        }).addTo(map);
+
+        marker.bindTooltip(formatDistance(totalDist), {
+          permanent: true,
+          direction: 'top',
+          className: 'measure-tooltip'
+        }).openTooltip();
+      } else {
+        marker.bindTooltip("จุดเริ่มต้น", {
+          permanent: true,
+          direction: 'top',
+          className: 'measure-tooltip'
+        }).openTooltip();
+      }
+    });
+
+    function clearMeasure() {
+      measurePoints = [];
+      measureMarkers.forEach(m => map.removeLayer(m));
+      measureMarkers = [];
+      if (measureLine) {
+        map.removeLayer(measureLine);
+        measureLine = null;
+      }
+      measureTotalDist.innerText = '0 ม.';
+    }
+
+    document.getElementById('btnClearMeasure').addEventListener('click', clearMeasure);
+    document.getElementById('btnExitMeasure').addEventListener('click', toggleMeasureMode);
+
+    /* =========================================================
+       ระบบอ่านข้อมูล KML และแสดงผลแปลง
+       ========================================================= */
     function createPopupContent(name, groupName, subGroup, color, props) {
       let content = `<div style="font-size: 13px;">`;
       content += `<strong style="font-size: 15px; color: ${color};">📍 รหัสแปลง: ${name}</strong><br/>`;
@@ -223,7 +413,6 @@
       let numMatchFile = fallbackName.match(/\d+/);
       let fallbackMainGroup = numMatchFile ? `กลุ่มคิว ${numMatchFile[0]}` : fallbackName;
 
-      // สร้าง Map เก็บข้อมูล Attribute ของแต่ละ Placemark ตาม name/id
       const placemarkMap = {};
       const placemarks = xmlDoc.getElementsByTagName('Placemark');
 
@@ -231,7 +420,6 @@
         const pm = placemarks[i];
         const pmData = {};
 
-        // 1. ดึง <SimpleData>
         const simpleNodes = pm.getElementsByTagName('SimpleData');
         for (let s = 0; s < simpleNodes.length; s++) {
           const k = simpleNodes[s].getAttribute('name');
@@ -239,7 +427,6 @@
           if (k && v) pmData[k] = v;
         }
 
-        // 2. ดึง <Data>
         const dataNodes = pm.getElementsByTagName('Data');
         for (let d = 0; d < dataNodes.length; d++) {
           const k = dataNodes[d].getAttribute('name');
@@ -248,7 +435,6 @@
           if (k && v) pmData[k] = v;
         }
 
-        // 3. แกะตาราง HTML ใน <description>
         const desc = pm.getElementsByTagName('description')[0];
         if (desc && desc.textContent && desc.textContent.includes('<table')) {
           try {
@@ -270,7 +456,6 @@
         placemarkMap[`idx_${i}`] = pmData;
       }
 
-      // แปลง KML เป็น GeoJSON
       const geojson = toGeoJSON.kml(xmlDoc);
 
       geojson.features.forEach((feature, idx) => {
@@ -278,7 +463,6 @@
         const matchedData = placemarkMap[props.name] || placemarkMap[`idx_${idx}`] || {};
         props = Object.assign(props, matchedData);
 
-        // ดึงกลุ่มย่อย
         let subGroup = props['รหัสกลุ่มคิว'] || props['รหัสกลุ่ม'] || props['sub_group'] || props['SUB_GROUP'] || null;
         if (!subGroup) {
           const allPropsText = JSON.stringify(props);
@@ -287,7 +471,6 @@
         }
         subGroup = subGroup ? String(subGroup).trim() : 'ทั่วไป';
 
-        // ดึงกลุ่มคิวหลัก
         let mainGroup = fallbackMainGroup;
         if (subGroup.includes('/')) {
           mainGroup = `กลุ่มคิว ${subGroup.split('/')[0]}`;
@@ -298,7 +481,6 @@
         props.main_grp = mainGroup;
         props.sub_grp = subGroup;
 
-        // รหัสแปลง
         let plotName = props['รหัสแปลง'] || props['PLOT_ID'] || props['plot_id'] || props['FID'] || props.name || 'ไม่มีรหัส';
 
         const subKey = `${mainGroup}:::${subGroup}`;
@@ -313,7 +495,15 @@
         const layer = L.geoJSON(feature, {
           style: { color: color, weight: 2, opacity: 0.9, fillColor: color, fillOpacity: 0.35 },
           pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5, fillColor: color, color: '#FFF', weight: 1, fillOpacity: 0.9 }),
-          onEachFeature: (f, l) => { l.bindPopup(createPopupContent(plotName, mainGroup, subGroup, color, props)); }
+          onEachFeature: (f, l) => { 
+            l.bindPopup(createPopupContent(plotName, mainGroup, subGroup, color, props)); 
+            l.on('click', (e) => {
+              // หากอยู่ในโหมดวัดระยะทาง ไม่เปิด Popup กวนการวัด
+              if (isMeasuring) {
+                l.closePopup();
+              }
+            });
+          }
         });
 
         subGroupLayers[subKey].addLayer(layer);
