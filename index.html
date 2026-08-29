@@ -694,7 +694,7 @@
     const emptyLogText = document.getElementById('emptyLogText');
     const modalScenarioName = document.getElementById('modalScenarioName');
 
-    document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
+document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
       modalScenarioName.innerText = scenarios[currentScenarioId].name;
       const overrides = scenarios[currentScenarioId]?.overrides || {};
       const movedPlotIds = Object.keys(overrides);
@@ -712,16 +712,36 @@
           if (!plot) return;
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td><b>${plot.name}</b></td>
+            <td>
+              <span style="color: #1565C0; font-weight: bold; cursor: pointer; text-decoration: underline;" 
+                    title="คลิกเพื่อไปยังแปลงนี้" 
+                    onclick="focusPlotFromModal('${id}')">
+                📍 ${plot.name}
+              </span>
+            </td>
             <td style="color:#c62828;">${plot.origSubKey.replace(':::', ' > ')}</td>
             <td style="color:#2e7d32; font-weight:bold;">${plot.subKey.replace(':::', ' > ')}</td>
-            <td><button onclick="resetSinglePlotToOriginal('${id}'); this.closest('tr').remove();" style="background:#FF9800; color:white; border:none; padding:2px 6px; border-radius:4px; cursor:pointer;">คืนค่า</button></td>
+            <td>
+              <button onclick="resetSinglePlotToOriginal('${id}'); this.closest('tr').remove(); if(document.querySelectorAll('#logTableBody tr').length === 0) { emptyLogText.style.display='block'; logTable.style.display='none'; }" 
+                      style="background:#FF9800; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">
+                คืนค่า
+              </button>
+            </td>
           `;
           logTableBody.appendChild(tr);
         });
       }
       logModal.style.display = 'flex';
     });
+
+    // ฟังก์ชันคลิกจาก Modal แล้วปิดหน้าต่างพร้อมซูมไปหาแปลงทันที
+    window.focusPlotFromModal = function(plotId) {
+      logModal.style.display = 'none';
+      const plot = plotRegistry[plotId];
+      if (plot) {
+        focusPlot(plot);
+      }
+    };
 
     document.getElementById('btnCloseModal').addEventListener('click', () => { logModal.style.display = 'none'; });
     document.getElementById('btnCloseModalBtn').addEventListener('click', () => { logModal.style.display = 'none'; });
