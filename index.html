@@ -124,28 +124,38 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 1200;
-      background: rgba(33, 33, 33, 0.9);
+      background: rgba(33, 33, 33, 0.95);
       color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
+      padding: 8px 14px;
+      border-radius: 24px;
       font-size: 13px;
       font-weight: 500;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
       align-items: center;
-      gap: 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     .measure-panel button {
-      background: #e91e63;
-      color: white;
       border: none;
-      padding: 3px 10px;
+      padding: 4px 10px;
       border-radius: 12px;
       cursor: pointer;
       font-size: 11px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: opacity 0.2s;
     }
-    .measure-panel button:hover { background: #c2185b; }
+    .measure-panel button:hover { opacity: 0.85; }
+    
+    .btn-undo-measure { background: #FF9800; color: white; }
+    .btn-clear-measure { background: #E91E63; color: white; }
+    .btn-close-measure { background: #555; color: white; }
+    
     .measure-tooltip {
-      background: rgba(233, 30, 99, 0.9);
+      background: #e91e63;
       border: 1px solid #ffffff;
       color: white;
       font-weight: bold;
@@ -154,9 +164,13 @@
       border-radius: 4px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
-    .measure-tooltip:before { border-top-color: rgba(233, 30, 99, 0.9); }
+    .measure-tooltip:before { border-top-color: #e91e63; }
 
-    /* ซ่อน Popup ทันทีขณะกำลังอยู่ในโหมดวัดระยะ */
+    /* ปิดการดักคลิกของทุกเลเยอร์เมื่อวัดระยะทาง เพื่อให้คลิกอิสระบนพิกัดจริง */
+    .measuring-mode .leaflet-overlay-pane path,
+    .measuring-mode .leaflet-marker-pane .leaflet-marker-icon {
+      pointer-events: none !important;
+    }
     .measuring-mode .leaflet-popup-pane {
       display: none !important;
     }
@@ -175,11 +189,12 @@
   <button id="mobileMenuBtn" class="mobile-menu-btn">📂 กลุ่มคิว / ค้นหา</button>
   <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-  <!-- แถบข้อความแจ้งเตือนขณะวัดระยะทาง -->
+  <!-- แถบแจ้งเตือนสถานะวัดระยะทางพร้อมปุ่มลบจุดก่อนหน้า และปุ่มล้างทั้งหมด -->
   <div id="measurePanel" class="measure-panel">
-    <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b> (คลิกแผนที่/แปลงเพื่อปักจุดต่อ)</span>
-    <button id="btnClearMeasure">ล้างค่า</button>
-    <button id="btnExitMeasure" style="background:#555;">ปิด</button>
+    <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b></span>
+    <button id="btnUndoMeasure" class="btn-undo-measure" title="ลบจุดล่าสุดที่เพิ่งคลิก">↩️ ลบจุดล่าสุด</button>
+    <button id="btnClearMeasure" class="btn-clear-measure" title="ล้างจุดทั้งหมด">🗑️ ล้างทั้งหมด</button>
+    <button id="btnExitMeasure" class="btn-close-measure">✕ ปิด</button>
   </div>
 
   <div id="sidebar">
@@ -286,7 +301,7 @@
     btnOpen.addEventListener('click', openMobileSidebar); btnClose.addEventListener('click', closeMobileSidebar); overlay.addEventListener('click', closeMobileSidebar);
 
     /* =========================================================
-       ระบบไม้บรรทัดวัดระยะทาง (Measure Tool)
+       ระบบไม้บรรทัดวัดระยะทางอิสระ (Measure Tool)
        ========================================================= */
     let isMeasuring = false;
     let measurePoints = [];
@@ -344,11 +359,32 @@
       return total;
     }
 
-    function addMeasurePoint(latlng, labelText) {
+    // อัปเดตเส้นและป้ายกำกับทั้งหมดใหม่
+    function redrawMeasureLine() {
+      if (measureLine) {
+        map.removeLayer(measureLine);
+        measureLine = null;
+      }
+
+      if (measurePoints.length > 1) {
+        measureLine = L.polyline(measurePoints, {
+          color: '#E91E63',
+          weight: 3.5,
+          dashArray: '6, 8',
+          opacity: 0.95
+        }).addTo(map);
+      }
+
+      const totalDist = calculateTotalDistance();
+      measureTotalDist.innerText = formatDistance(totalDist);
+    }
+
+    // เพิ่มจุดวัดระยะทาง
+    function addMeasurePoint(latlng) {
       measurePoints.push(latlng);
 
       const marker = L.circleMarker(latlng, {
-        radius: 5,
+        radius: 4.5,
         color: '#E91E63',
         fillColor: '#FFFFFF',
         fillOpacity: 1,
@@ -360,44 +396,36 @@
       measureTotalDist.innerText = formatDistance(totalDist);
 
       if (measurePoints.length > 1) {
-        if (measureLine) map.removeLayer(measureLine);
+        redrawMeasureLine();
 
-        measureLine = L.polyline(measurePoints, {
-          color: '#E91E63',
-          weight: 3.5,
-          dashArray: '6, 8',
-          opacity: 0.95
-        }).addTo(map);
-
-        marker.bindTooltip(labelText || formatDistance(totalDist), {
+        marker.bindTooltip(formatDistance(totalDist), {
           permanent: true,
           direction: 'top',
-          className: 'measure-tooltip'
+          className: 'measure-tooltip',
+          offset: [0, -5]
         }).openTooltip();
       } else {
-        marker.bindTooltip(labelText || "จุดเริ่มต้น", {
+        marker.bindTooltip("จุดเริ่ม", {
           permanent: true,
           direction: 'top',
-          className: 'measure-tooltip'
+          className: 'measure-tooltip',
+          offset: [0, -5]
         }).openTooltip();
       }
     }
 
-    window.startMeasureFromPlot = function(lat, lng, plotName) {
-      if (!isMeasuring) {
-        toggleMeasureMode();
-      } else {
-        clearMeasure();
-      }
-      map.closePopup();
-      addMeasurePoint(L.latLng(lat, lng), `เริ่มต้น: ${plotName}`);
-    };
+    // ลบจุดล่าสุด (Undo)
+    function undoLastMeasurePoint() {
+      if (measurePoints.length === 0) return;
 
-    map.on('click', function(e) {
-      if (!isMeasuring) return;
-      addMeasurePoint(e.latlng);
-    });
+      measurePoints.pop();
+      const lastMarker = measureMarkers.pop();
+      if (lastMarker) map.removeLayer(lastMarker);
 
+      redrawMeasureLine();
+    }
+
+    // ล้างจุดทั้งหมด
     function clearMeasure() {
       measurePoints = [];
       measureMarkers.forEach(m => map.removeLayer(m));
@@ -409,6 +437,32 @@
       measureTotalDist.innerText = '0 ม.';
     }
 
+    // เริ่มวัดระยะจากจุดกึ่งกลางของแปลงที่เลือก
+    window.startMeasureFromPlot = function(lat, lng) {
+      if (!isMeasuring) {
+        toggleMeasureMode();
+      } else {
+        clearMeasure();
+      }
+      map.closePopup();
+      addMeasurePoint(L.latLng(lat, lng));
+    };
+
+    // คลิกซ้ายปักจุด
+    map.on('click', function(e) {
+      if (!isMeasuring) return;
+      addMeasurePoint(e.latlng);
+    });
+
+    // คลิกขวาลบจุดล่าสุด
+    map.on('contextmenu', function(e) {
+      if (isMeasuring) {
+        e.originalEvent.preventDefault();
+        undoLastMeasurePoint();
+      }
+    });
+
+    document.getElementById('btnUndoMeasure').addEventListener('click', undoLastMeasurePoint);
     document.getElementById('btnClearMeasure').addEventListener('click', clearMeasure);
     document.getElementById('btnExitMeasure').addEventListener('click', toggleMeasureMode);
 
@@ -430,7 +484,7 @@
       content += `<span style="font-size: 12px; color: #555;"><b>กลุ่ม:</b> ${groupName} | <b>กลุ่มย่อย:</b> ${subGroup}</span>`;
       
       if (centerLatLng) {
-        content += `<button class="btn-measure-popup" onclick="startMeasureFromPlot(${centerLatLng.lat}, ${centerLatLng.lng}, '${name}')">📏 วัดระยะทางจากแปลงนี้</button>`;
+        content += `<button class="btn-measure-popup" onclick="startMeasureFromPlot(${centerLatLng.lat}, ${centerLatLng.lng})">📏 เริ่มวัดระยะจากแปลงนี้</button>`;
       }
       
       content += `<hr style="margin: 8px 0; border: none; border-top: 1px solid #e0e0e0;"/>`;
@@ -548,18 +602,6 @@
           onEachFeature: (f, l) => { 
             const center = getPlotCenterLatLng(l);
             l.bindPopup(createPopupContent(plotName, mainGroup, subGroup, color, props, center)); 
-            
-            // ดักการคลิกที่ตัวแปลงโดยตรงขณะวัดระยะทาง
-            l.on('click', (e) => {
-              if (isMeasuring) {
-                L.DomEvent.stopPropagation(e);
-                if (e.originalEvent) e.originalEvent.stopPropagation();
-                l.closePopup();
-                
-                const pt = center || e.latlng;
-                addMeasurePoint(pt, `แปลง: ${plotName}`);
-              }
-            });
           }
         });
 
