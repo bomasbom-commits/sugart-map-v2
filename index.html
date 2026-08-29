@@ -156,10 +156,9 @@
     }
     .measure-tooltip:before { border-top-color: rgba(233, 30, 99, 0.9); }
 
-    /* ปิดการรับคลิกของแปลงตอนวัดระยะ เพื่อให้คลิกทะลุไปลงบนแผนที่และวัดต่อได้ */
-    .measuring-mode .leaflet-interactive {
-      pointer-events: none !important;
-      cursor: crosshair !important;
+    /* ซ่อน Popup ทันทีขณะกำลังอยู่ในโหมดวัดระยะ */
+    .measuring-mode .leaflet-popup-pane {
+      display: none !important;
     }
 
     @media (max-width: 768px) {
@@ -549,6 +548,18 @@
           onEachFeature: (f, l) => { 
             const center = getPlotCenterLatLng(l);
             l.bindPopup(createPopupContent(plotName, mainGroup, subGroup, color, props, center)); 
+            
+            // ดักการคลิกที่ตัวแปลงโดยตรงขณะวัดระยะทาง
+            l.on('click', (e) => {
+              if (isMeasuring) {
+                L.DomEvent.stopPropagation(e);
+                if (e.originalEvent) e.originalEvent.stopPropagation();
+                l.closePopup();
+                
+                const pt = center || e.latlng;
+                addMeasurePoint(pt, `แปลง: ${plotName}`);
+              }
+            });
           }
         });
 
