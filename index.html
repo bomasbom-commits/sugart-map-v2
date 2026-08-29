@@ -136,7 +136,6 @@
   <script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
 
   <script>
-    // รายชื่อไฟล์ KML ตามโฟลเดอร์
     const kmlFiles = [
       'กลุ่มคิว_02.kml',
       'กลุ่มคิว_11.kml',
@@ -190,19 +189,67 @@
     function closeMobileSidebar() { sidebar.classList.remove('active'); overlay.classList.remove('active'); setTimeout(() => map.invalidateSize(), 300); }
     btnOpen.addEventListener('click', openMobileSidebar); btnClose.addEventListener('click', closeMobileSidebar); overlay.addEventListener('click', closeMobileSidebar);
 
+    // ดึงข้อมูล Attribute จาก HTML Table ใน Description หรือ ExtendedData ของ KML
+    function extractKmlProperties(feature) {
+      let props = Object.assign({}, feature.properties || {});
+
+      // 1. ตรวจสอบตาราง HTML ที่ซ่อนอยู่ใน description
+      if (props.description && typeof props.description === 'string' && props.description.includes('<table')) {
+        try {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(props.description, 'text/html');
+          const rows = doc.querySelectorAll('tr');
+          rows.forEach(tr => {
+            const cells = tr.querySelectorAll('td, th');
+            if (cells.length >= 2) {
+              const key = cells[0].textContent.trim();
+              const val = cells[1].textContent.trim();
+              if (key && val && !props[key]) {
+                props[key] = val;
+              }
+            }
+          });
+        } catch (e) {
+          console.warn('Error parsing description HTML', e);
+        }
+      }
+
+      // 2. ดึงข้อมูลจาก ExtendedData / SimpleData
+      if (props.ExtendedData && typeof props.ExtendedData === 'object') {
+        for (const [k, v] of Object.entries(props.ExtendedData)) {
+          if (!props[k]) props[k] = v;
+        }
+      }
+
+      return props;
+    }
+
     function createPopupContent(name, groupName, subGroup, color, props) {
       let content = `<div style="font-size: 13px;">`;
       content += `<strong style="font-size: 15px; color: ${color};">📍 รหัสแปลง: ${name}</strong><br/>`;
       content += `<span style="font-size: 12px; color: #555;"><b>กลุ่ม:</b> ${groupName} | <b>กลุ่มย่อย:</b> ${subGroup}</span>`;
       content += `<hr style="margin: 8px 0; border: none; border-top: 1px solid #e0e0e0;"/>`;
 
+      // รายชื่อฟิลด์สไตล์ของ KML ที่ไม่ต้องการให้แสดงในตาราง
+      const ignoredKeys = [
+        'name', 'description', 'main_grp', 'sub_grp', 'styleUrl', 'styleHash', 
+        'stroke', 'stroke-opacity', 'stroke-width', 'fill', 'fill-opacity', 
+        'icon', 'ExtendedData', 'gx_media_links'
+      ];
+
       let rows = '';
       for (const [key, val] of Object.entries(props)) {
-        if (!['name', 'description', 'main_grp', 'sub_grp', 'styleUrl', 'styleHash', 'stroke', 'fill'].includes(key) && val !== null && val !== undefined && val !== '') {
+        if (!ignoredKeys.includes(key) && val !== null && val !== undefined && String(val).trim() !== '') {
           rows += `<tr><td>${key}</td><td>${val}</td></tr>`;
         }
       }
-      if (rows) content += `<table>${rows}</table>`;
+
+      if (rows) {
+        content += `<table>${rows}</table>`;
+      } else {
+        content += `<p style="color: #777; font-size: 11px; margin-top: 6px;">ไม่มีข้อมูลคุณลักษณะเพิ่มเติม</p>`;
+      }
+
       content += `</div>`;
       return content;
     }
@@ -213,9 +260,10 @@
       let fallbackMainGroup = numMatchFile ? `กลุ่มคิว ${numMatchFile[0]}` : fallbackName;
 
       geojsonData.features.forEach(feature => {
-        const props = feature.properties = feature.properties || {};
+        let props = extractKmlProperties(feature);
+        feature.properties = props;
         
-        let subGroup = props['รหัสกลุ่มคิว'] || props['รหัสกลุ่ม'] || null;
+        let subGroup = props['รหัสกลุ่มคิว'] || props['รหัสกลุ่ม'] || props['sub_group'] || props['SUB_GROUP'] || null;
         if (!subGroup) {
           const allPropsText = JSON.stringify(props);
           const match = allPropsText.match(/\b(\d{2,3}[\/_]\d{3,4})\b/);
@@ -233,7 +281,7 @@
         props.main_grp = mainGroup;
         props.sub_grp = subGroup;
 
-        let plotName = props['รหัสแปลง'] || props.name || 'ไม่มีรหัส';
+        let plotName = props['รหัสแปลง'] || props['PLOT_ID'] || props['plot_id'] || props['FID'] || props.name || 'ไม่มีรหัส';
 
         const subKey = `${mainGroup}:::${subGroup}`;
         if (!subColorMap[subKey]) {
@@ -478,9 +526,14 @@
         const nameMatch = i.name.toLowerCase().includes(kw);
         const groupMatch = i.mainGroup.toLowerCase().includes(kw);
         const subMatch = i.subGroup.toLowerCase().includes(kw);
-        let descMatch = false;
-        if (i.props && i.props.description) descMatch = i.props.description.toLowerCase().includes(kw);
-        return nameMatch || groupMatch || subMatch || descMatch;
+        
+        let propsMatch = false;
+        if (i.props) {
+          propsMatch = Object.values(i.props).some(v => 
+            v !== null && v !== undefined && String(v).toLowerCase().includes(kw)
+          );
+        }
+        return nameMatch || groupMatch || subMatch || propsMatch;
       });
 
       if (matched.length === 0) { searchDropdown.innerHTML = `<div class="search-item" style="color:#888;">ไม่พบข้อมูล</div>`; searchDropdown.style.display = 'block'; return; }
