@@ -166,11 +166,7 @@
     }
     .measure-tooltip:before { border-top-color: #e91e63; }
 
-    /* ปิดการดักคลิกของทุกเลเยอร์เมื่อวัดระยะทาง เพื่อให้คลิกอิสระบนพิกัดจริง */
-    .measuring-mode .leaflet-overlay-pane path,
-    .measuring-mode .leaflet-marker-pane .leaflet-marker-icon {
-      pointer-events: none !important;
-    }
+    /* ซ่อน Popup เมื่ออยู่ในโหมดวัดระยะทาง */
     .measuring-mode .leaflet-popup-pane {
       display: none !important;
     }
@@ -189,7 +185,7 @@
   <button id="mobileMenuBtn" class="mobile-menu-btn">📂 กลุ่มคิว / ค้นหา</button>
   <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-  <!-- แถบแจ้งเตือนสถานะวัดระยะทางพร้อมปุ่มลบจุดก่อนหน้า และปุ่มล้างทั้งหมด -->
+  <!-- แถบแจ้งเตือนสถานะวัดระยะทาง -->
   <div id="measurePanel" class="measure-panel">
     <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b></span>
     <button id="btnUndoMeasure" class="btn-undo-measure" title="ลบจุดล่าสุดที่เพิ่งคลิก">↩️ ลบจุดล่าสุด</button>
@@ -359,7 +355,6 @@
       return total;
     }
 
-    // อัปเดตเส้นและป้ายกำกับทั้งหมดใหม่
     function redrawMeasureLine() {
       if (measureLine) {
         map.removeLayer(measureLine);
@@ -379,7 +374,6 @@
       measureTotalDist.innerText = formatDistance(totalDist);
     }
 
-    // เพิ่มจุดวัดระยะทาง
     function addMeasurePoint(latlng) {
       measurePoints.push(latlng);
 
@@ -414,7 +408,6 @@
       }
     }
 
-    // ลบจุดล่าสุด (Undo)
     function undoLastMeasurePoint() {
       if (measurePoints.length === 0) return;
 
@@ -425,7 +418,6 @@
       redrawMeasureLine();
     }
 
-    // ล้างจุดทั้งหมด
     function clearMeasure() {
       measurePoints = [];
       measureMarkers.forEach(m => map.removeLayer(m));
@@ -437,7 +429,6 @@
       measureTotalDist.innerText = '0 ม.';
     }
 
-    // เริ่มวัดระยะจากจุดกึ่งกลางของแปลงที่เลือก
     window.startMeasureFromPlot = function(lat, lng) {
       if (!isMeasuring) {
         toggleMeasureMode();
@@ -448,13 +439,11 @@
       addMeasurePoint(L.latLng(lat, lng));
     };
 
-    // คลิกซ้ายปักจุด
     map.on('click', function(e) {
       if (!isMeasuring) return;
       addMeasurePoint(e.latlng);
     });
 
-    // คลิกขวาลบจุดล่าสุด
     map.on('contextmenu', function(e) {
       if (isMeasuring) {
         e.originalEvent.preventDefault();
@@ -602,6 +591,14 @@
           onEachFeature: (f, l) => { 
             const center = getPlotCenterLatLng(l);
             l.bindPopup(createPopupContent(plotName, mainGroup, subGroup, color, props, center)); 
+
+            // ดักจับการคลิกที่แปลงขณะวัดระยะทาง
+            l.on('click', (e) => {
+              if (isMeasuring) {
+                if (l.closePopup) l.closePopup();
+                addMeasurePoint(e.latlng);
+              }
+            });
           }
         });
 
