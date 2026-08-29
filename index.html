@@ -54,7 +54,11 @@
     .plot-item { padding: 5px 8px; font-size: 12px; color: #1565c0; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 5px; }
     .plot-item:hover { background: #e3f2fd; color: #0d47a1; font-weight: 600; }
     .node-left { display: flex; align-items: center; gap: 6px; }
-    .color-dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+    
+    .color-dot { display: inline-block; width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; cursor: pointer; border: 1px solid rgba(0,0,0,0.2); transition: transform 0.1s; }
+    .color-dot:hover { transform: scale(1.2); }
+    .color-picker-input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+
     .caret { transition: transform 0.2s; font-size: 9px; color: #666; display: inline-block; width: 12px; }
     .caret.open { transform: rotate(90deg); }
     .badge { background: #e0e0e0; color: #37474f; padding: 1px 6px; border-radius: 10px; font-size: 10.5px; font-weight: bold; }
@@ -112,7 +116,6 @@
       </div>
 
       <div>
-        <!-- เพิ่มปุ่ม "เปิดทั้งหมด" ที่นี่ -->
         <div class="tree-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;">
           <span>🗂️ กลุ่มรถตัดทั้งหมด (<span id="totalPlotsCount">0</span> แปลง)</span>
           <label style="cursor: pointer; font-size: 11px; font-weight: normal; background: #e3f2fd; padding: 4px 8px; border-radius: 4px; border: 1px solid #bbdefb; color: #0d47a1; display: inline-flex; align-items: center; gap: 4px; margin: 0;">
@@ -127,35 +130,43 @@
 
   <div id="map"></div>
 
-  <!-- Leaflet & toGeoJSON -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/@tmcw/togeojson"></script>
 
   <script>
-    const kmlFiles = [
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_02.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_11.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_15.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_21.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_22.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_23.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_31.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_42.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_43.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_45.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_51.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_61.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_62.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_63.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_64.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_71.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_72.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_82.kml',
-      'กลุ่มรถตัด/กลุ่มรถตัดทั้งหมด/กลุ่ม_83.kml'
+    // รายชื่อไฟล์ GeoJSON ที่วางอยู่หน้าแรกของ GitHub ตรงกันเป๊ะ
+    const geojsonFiles = [
+      'กลุ่ม_02.geojson',
+      'กลุ่ม_11.geojson',
+      'กลุ่ม_15.geojson',
+      'กลุ่ม_21.geojson',
+      'กลุ่ม_22.geojson',
+      'กลุ่ม_23.geojson',
+      'กลุ่ม_31.geojson',
+      'กลุ่ม_42.geojson',
+      'กลุ่ม_43.geojson',
+      'กลุ่ม_45.geojson',
+      'กลุ่ม_51.geojson',
+      'กลุ่ม_61.geojson',
+      'กลุ่ม_62.geojson',
+      'กลุ่ม_63.geojson',
+      'กลุ่ม_64.geojson',
+      'กลุ่ม_71.geojson',
+      'กลุ่ม_72.geojson',
+      'กลุ่ม_82.geojson',
+      'กลุ่ม_83.geojson'
     ];
 
-    const palette = ['#E53935', '#8E24AA', '#1E88E5', '#00897B', '#43A047', '#FB8C00', '#F4511E', '#6D4C41', '#546E7A', '#00ACC1', '#D81B60', '#5E35B1', '#3949AB', '#7CB342', '#FDD835', '#00BCD4', '#9C27B0', '#E91E63', '#4CAF50', '#FF9800'];
+    const palette = [
+      '#E53935', '#8E24AA', '#1E88E5', '#00897B', '#43A047', 
+      '#FB8C00', '#F4511E', '#6D4C41', '#546E7A', '#00ACC1', 
+      '#D81B60', '#5E35B1', '#3949AB', '#7CB342', '#FDD835', 
+      '#00BCD4', '#9C27B0', '#E91E63', '#4CAF50', '#FF9800',
+      '#00838F', '#283593', '#AD1457', '#C2185B', '#6A1B9A'
+    ];
+    
     const subColorMap = {};
+    const subGroupPlotsMap = {};
 
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri World Imagery', maxZoom: 19 });
     const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OpenStreetMap', maxZoom: 19 });
@@ -183,95 +194,44 @@
       content += `<span style="font-size: 12px; color: #555;"><b>กลุ่ม:</b> ${groupName} | <b>กลุ่มย่อย:</b> ${subGroup}</span>`;
       content += `<hr style="margin: 8px 0; border: none; border-top: 1px solid #e0e0e0;"/>`;
 
-      if (props.description && typeof props.description === 'string') {
-        content += `<div>${props.description}</div>`;
-      } else {
-        let rows = '';
-        for (const [key, val] of Object.entries(props)) {
-          if (!['name', 'description', 'main_grp', 'sub_grp', 'styleUrl'].includes(key) && val) rows += `<tr><td>${key}</td><td>${val}</td></tr>`;
+      let rows = '';
+      for (const [key, val] of Object.entries(props)) {
+        if (!['name', 'description', 'main_grp', 'sub_grp', 'styleUrl'].includes(key) && val !== null && val !== undefined && val !== '') {
+          rows += `<tr><td>${key}</td><td>${val}</td></tr>`;
         }
-        if (rows) content += `<table>${rows}</table>`;
       }
+      if (rows) content += `<table>${rows}</table>`;
       content += `</div>`;
       return content;
     }
 
-    function parseKmlHierarchy(xmlDoc, defaultFileName) {
-      const geojson = toGeoJSON.kml(xmlDoc);
-      const placemarks = xmlDoc.getElementsByTagName('Placemark');
-
-      let fallbackName = defaultFileName.split('/').pop().replace('.kml', '');
+    function processGeoJson(geojsonData, defaultFileName) {
+      let fallbackName = defaultFileName.split('/').pop().replace('.geojson', '');
       let numMatchFile = fallbackName.match(/\d+/);
       let fallbackMainGroup = numMatchFile ? `กลุ่มคิว ${numMatchFile[0]}` : fallbackName;
 
-      let featureIndex = 0;
-
-      for (let i = 0; i < placemarks.length; i++) {
-        const pm = placemarks[i];
-        
-        const hasGeom = pm.getElementsByTagName('Polygon').length > 0 || pm.getElementsByTagName('Point').length > 0 || pm.getElementsByTagName('LineString').length > 0 || pm.getElementsByTagName('MultiGeometry').length > 0;
-        if (!hasGeom) continue; 
-
-        const feature = geojson.features[featureIndex];
-        featureIndex++;
-        if (!feature) continue;
-
+      geojsonData.features.forEach(feature => {
         const props = feature.properties = feature.properties || {};
-
-        const simpleDataNodes = pm.getElementsByTagName('SimpleData');
-        for (let s = 0; s < simpleDataNodes.length; s++) {
-          const attrName = simpleDataNodes[s].getAttribute('name');
-          const attrVal = simpleDataNodes[s].textContent;
-          if (attrName && attrVal) props[attrName] = attrVal.trim();
-        }
-
-        const dataNodes = pm.getElementsByTagName('Data');
-        for (let d = 0; d < dataNodes.length; d++) {
-          const attrName = dataNodes[d].getAttribute('name');
-          const valNodes = dataNodes[d].getElementsByTagName('value');
-          if (attrName && valNodes.length > 0 && valNodes[0].textContent) {
-            props[attrName] = valNodes[0].textContent.trim();
-          }
-        }
         
-        const descNodes = pm.getElementsByTagName('description');
-        if (descNodes.length > 0 && descNodes[0].textContent) {
-          props.description = descNodes[0].textContent.trim();
+        let subGroup = props['รหัสกลุ่มคิว'] || props['รหัสกลุ่ม'] || null;
+        if (!subGroup) {
+          const allPropsText = JSON.stringify(props);
+          const match = allPropsText.match(/\b(\d{2,3}[\/_]\d{3,4})\b/);
+          if (match) subGroup = match[1];
         }
+        subGroup = subGroup ? String(subGroup).trim() : 'ทั่วไป';
 
-        let subGroup = null;
         let mainGroup = fallbackMainGroup;
-
-        if (props['รหัสกลุ่มคิว']) {
-            subGroup = String(props['รหัสกลุ่มคิว']).trim();
-        } else if (props['รหัสกลุ่ม']) {
-            subGroup = String(props['รหัสกลุ่ม']).trim();
-        } else {
-            const allPropsText = JSON.stringify(props);
-            const match = allPropsText.match(/\b(\d{2,3}_\d{3,4})\b/);
-            if (match) subGroup = match[1];
-        }
-
-        if (subGroup && subGroup.includes('_')) {
-            mainGroup = `กลุ่มคิว ${subGroup.split('_')[0]}`;
-        } else {
-            subGroup = 'ทั่วไป';
+        if (subGroup.includes('/')) {
+          mainGroup = `กลุ่มคิว ${subGroup.split('/')[0]}`;
+        } else if (subGroup.includes('_')) {
+          mainGroup = `กลุ่มคิว ${subGroup.split('_')[0]}`;
         }
 
         props.main_grp = mainGroup;
         props.sub_grp = subGroup;
-      }
-      return geojson;
-    }
 
-    function processGeoJson(geojsonData) {
-      geojsonData.features.forEach(feature => {
-        const props = feature.properties || {};
-        const mainGroup = props.main_grp || 'ไม่ระบุกลุ่ม';
-        const subGroup = props.sub_grp || 'ทั่วไป';
-        
         let plotName = props['รหัสแปลง'] || props.name || 'ไม่มีรหัส';
-        if(plotName.includes('<td') || plotName.includes('<')) { plotName = 'แปลงไม่มีรหัส'; }
 
         const subKey = `${mainGroup}:::${subGroup}`;
         if (!subColorMap[subKey]) {
@@ -297,11 +257,26 @@
         treeData[mainGroup][subGroup].push(plotObj);
         searchIndex.push(plotObj);
 
+        if (!subGroupPlotsMap[subKey]) subGroupPlotsMap[subKey] = [];
+        subGroupPlotsMap[subKey].push(plotObj);
+
         if (layer.getBounds && layer.getBounds().isValid()) totalBounds.extend(layer.getBounds());
       });
     }
 
-    // ฟังก์ชันซิงค์สถานะปุ่ม เลือกทั้งหมด/ยกเลิกทั้งหมด
+    function updateSubGroupColor(subKey, newColor) {
+      subColorMap[subKey] = newColor;
+      if (subGroupPlotsMap[subKey]) {
+        subGroupPlotsMap[subKey].forEach(plot => {
+          plot.color = newColor;
+          if (plot.layer.setStyle) {
+            plot.layer.setStyle({ color: newColor, fillColor: newColor });
+          }
+          plot.layer.bindPopup(createPopupContent(plot.name, plot.mainGroup, plot.subGroup, newColor, plot.props));
+        });
+      }
+    }
+
     function syncSelectAllBtn() {
       const allCbGroups = document.querySelectorAll('.cb-group');
       if (allCbGroups.length === 0) return;
@@ -314,15 +289,12 @@
       }
     }
 
-    // ฟังก์ชัน Event ลบ/เพิ่ม Layer จากปุ่มเปิดทั้งหมด
     document.getElementById('selectAllGroups').addEventListener('change', function() {
       const isChecked = this.checked;
       document.getElementById('selectAllText').innerText = isChecked ? 'เปิดทั้งหมด' : 'ปิดทั้งหมด';
       
-      // อัปเดต Checkbox ทุกตัว
       document.querySelectorAll('.cb-group, .cb-sub').forEach(cb => { cb.checked = isChecked; });
 
-      // อัปเดต Layer บนแผนที่
       Object.keys(subGroupLayers).forEach(key => {
         if (isChecked) {
           if (!map.hasLayer(subGroupLayers[key])) map.addLayer(subGroupLayers[key]);
@@ -349,7 +321,13 @@
         groupLi.className = 'group-node';
         const groupHeader = document.createElement('div');
         groupHeader.className = 'group-header';
-        groupHeader.innerHTML = `<div class="node-left"><span class="caret">▶</span><input type="checkbox" checked class="cb-group" data-group="${mainGroup}" /><span>📁 ${mainGroup}</span></div><span class="badge badge-group">${groupPlotCount}</span>`;
+        groupHeader.innerHTML = `
+          <div class="node-left">
+            <span class="caret">▶</span>
+            <input type="checkbox" checked class="cb-group" data-group="${mainGroup}" />
+            <span>📁 ${mainGroup}</span>
+          </div>
+          <span class="badge badge-group">${groupPlotCount}</span>`;
 
         const subUl = document.createElement('ul');
         subUl.className = 'sub-list';
@@ -359,13 +337,21 @@
         sortedSubGroups.forEach(subGroup => {
           const plots = subGroups[subGroup];
           const subKey = `${mainGroup}:::${subGroup}`;
-          const color = subColorMap[subKey];
+          const subColor = subColorMap[subKey] || '#1565C0';
 
           const subLi = document.createElement('li');
           subLi.className = 'sub-node';
           const subHeader = document.createElement('div');
           subHeader.className = 'sub-header';
-          subHeader.innerHTML = `<div class="node-left"><span class="caret caret-sub">▶</span><input type="checkbox" checked class="cb-sub" data-key="${subKey}" /><span class="color-dot" style="background:${color};"></span><span>📁 ${subGroup}</span></div><span class="badge" style="font-size:10px;">${plots.length}</span>`;
+          subHeader.innerHTML = `
+            <div class="node-left">
+              <span class="caret caret-sub">▶</span>
+              <input type="checkbox" checked class="cb-sub" data-key="${subKey}" />
+              <span class="color-dot" style="background:${subColor};" title="คลิกเพื่อเปลี่ยนสี" data-subkey="${subKey}"></span>
+              <input type="color" class="color-picker-input" data-subkey="${subKey}" value="${subColor}">
+              <span>📁 ${subGroup}</span>
+            </div>
+            <span class="badge" style="font-size:10px;">${plots.length}</span>`;
 
           const plotUl = document.createElement('ul');
           plotUl.className = 'plot-list';
@@ -378,11 +364,30 @@
             plotUl.appendChild(plotLi);
           });
 
-          subHeader.addEventListener('click', (e) => { if (e.target.tagName === 'INPUT') return; const isOpen = plotUl.style.display === 'block'; plotUl.style.display = isOpen ? 'none' : 'block'; subHeader.querySelector('.caret-sub').classList.toggle('open', !isOpen); });
+          subHeader.addEventListener('click', (e) => { 
+            if (e.target.tagName === 'INPUT' || e.target.classList.contains('color-dot')) return; 
+            const isOpen = plotUl.style.display === 'block'; 
+            plotUl.style.display = isOpen ? 'none' : 'block'; 
+            subHeader.querySelector('.caret-sub').classList.toggle('open', !isOpen); 
+          });
+
+          const colorDot = subHeader.querySelector('.color-dot');
+          const colorInput = subHeader.querySelector('.color-picker-input');
+
+          colorDot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            colorInput.click();
+          });
+
+          colorInput.addEventListener('input', (e) => {
+            const newColor = e.target.value;
+            colorDot.style.backgroundColor = newColor;
+            updateSubGroupColor(subKey, newColor);
+          });
+
           subHeader.querySelector('.cb-sub').addEventListener('change', function () { 
             if (this.checked) map.addLayer(subGroupLayers[subKey]); else map.removeLayer(subGroupLayers[subKey]); 
             
-            // เช็คว่าถ้ากลุ่มย่อยถูกติ๊กออกหมด กลุ่มหลักก็ควรเอาติ๊กออกด้วย (เพื่อความสมจริง)
             const allSubs = Array.from(subUl.querySelectorAll('.cb-sub'));
             const anySubChecked = allSubs.some(cb => cb.checked);
             groupHeader.querySelector('.cb-group').checked = anySubChecked;
@@ -414,14 +419,14 @@
       if (!map.hasLayer(subGroupLayers[subKey])) { 
         map.addLayer(subGroupLayers[subKey]); 
         const cb = document.querySelector(`input[data-key="${subKey}"]`); 
-        if (cb) { cb.checked = true; cb.dispatchEvent(new Event('change')); } // ให้ทริกเกอร์อีเวนต์เพื่ออัปเดตปุ่มแม่
+        if (cb) { cb.checked = true; cb.dispatchEvent(new Event('change')); }
       }
       if (layer.getBounds && layer.getBounds().isValid()) { map.fitBounds(layer.getBounds(), { padding: [50, 50], maxZoom: 18 }); } else if (layer.getLatLng) { map.setView(layer.getLatLng(), 18); }
       layer.openPopup();
       if (layer.setStyle) { layer.setStyle({ color: '#FFD600', weight: 5, fillOpacity: 0.75 }); setTimeout(() => { layer.setStyle({ color: plot.color, weight: 2, opacity: 0.9, fillColor: plot.color, fillOpacity: 0.35 }); }, 2000); }
     }
 
-    async function loadAllKmlFiles() {
+    async function loadAllGeoJsonFiles() {
       const pLabel = document.getElementById('progressLabel'), pPercent = document.getElementById('progressPercent'), pBar = document.getElementById('progressBar'), pBox = document.getElementById('progressContainer');
       let successCount = 0;
 
@@ -431,18 +436,16 @@
         return;
       }
 
-      for (let i = 0; i < kmlFiles.length; i++) {
-        const filePath = kmlFiles[i];
-        const pct = Math.round(((i + 1) / kmlFiles.length) * 100);
-        pLabel.innerText = `กำลังโหลดข้อมูลกลุ่มที่ ${i + 1}/${kmlFiles.length}`; pPercent.innerText = `${pct}%`; pBar.style.width = `${pct}%`;
+      for (let i = 0; i < geojsonFiles.length; i++) {
+        const filePath = geojsonFiles[i];
+        const pct = Math.round(((i + 1) / geojsonFiles.length) * 100);
+        pLabel.innerText = `กำลังโหลดข้อมูลกลุ่มที่ ${i + 1}/${geojsonFiles.length}`; pPercent.innerText = `${pct}%`; pBar.style.width = `${pct}%`;
 
         try {
           const response = await fetch(encodeURI(filePath));
           if (response.ok) {
-            const text = await response.text();
-            const xmlDoc = new DOMParser().parseFromString(text, 'text/xml');
-            const geojson = parseKmlHierarchy(xmlDoc, filePath);
-            processGeoJson(geojson);
+            const geojson = await response.json();
+            processGeoJson(geojson, filePath);
             successCount++;
           }
         } catch (err) { console.warn(`ข้ามไฟล์: ${filePath}`, err); }
@@ -489,7 +492,7 @@
 
     document.addEventListener('click', (e) => { if (!e.target.closest('.search-box')) searchDropdown.style.display = 'none'; });
 
-    loadAllKmlFiles();
+    loadAllGeoJsonFiles();
   </script>
 </body>
 </html>
