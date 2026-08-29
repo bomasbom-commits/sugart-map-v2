@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ระบบแผนที่และจำลองจัดกลุ่มคิวแปลงอ้อยรถตัด</title>
+  <title>แผนที่แปลงอ้อยรถตัด</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -28,16 +28,6 @@
     .btn-close-sidebar { display: none; background: none; border: none; color: white; font-size: 20px; cursor: pointer; line-height: 1; }
     .sidebar-content { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
-    /* Scenario Box ใน Sidebar */
-    .scenario-box {
-      background: #FFF8E1; border: 1px solid #FFE082; border-radius: 8px; padding: 10px 12px;
-      display: flex; flex-direction: column; gap: 6px;
-    }
-    .scenario-box-title { font-size: 12px; font-weight: bold; color: #F57F17; display: flex; justify-content: space-between; align-items: center; }
-    .scenario-select { width: 100%; padding: 6px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #FFD54F; font-weight: bold; outline: none; background: white; }
-    .scenario-actions { display: flex; gap: 6px; }
-    .btn-sc-action { flex: 1; padding: 4px 6px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-
     .progress-box { background: #E3F2FD; border: 1px solid #BBDEFB; border-radius: 8px; padding: 10px 12px; }
     .progress-text { font-size: 12px; font-weight: bold; color: #0D47A1; display: flex; justify-content: space-between; margin-bottom: 5px; }
     .progress-bar-bg { width: 100%; height: 6px; background: #E0E0E0; border-radius: 3px; overflow: hidden; }
@@ -61,7 +51,7 @@
     .sub-header { padding: 5px 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 12px; font-weight: 500; border-radius: 4px; }
     .sub-header:hover { background: #f0f4f8; }
     .plot-list { list-style: none; display: none; padding: 2px 0 2px 16px; }
-    .plot-item { padding: 5px 8px; font-size: 12px; color: #1565c0; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 5px; justify-content: space-between; }
+    .plot-item { padding: 5px 8px; font-size: 12px; color: #1565c0; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 5px; }
     .plot-item:hover { background: #e3f2fd; color: #0d47a1; font-weight: 600; }
     .node-left { display: flex; align-items: center; gap: 6px; }
     
@@ -72,92 +62,124 @@
     .caret { transition: transform 0.2s; font-size: 9px; color: #666; display: inline-block; width: 12px; }
     .caret.open { transform: rotate(90deg); }
     .badge { background: #e0e0e0; color: #37474f; padding: 1px 6px; border-radius: 10px; font-size: 10.5px; font-weight: bold; }
-    .badge-moved { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; font-size: 9px; padding: 1px 4px; border-radius: 4px; }
 
     #map { flex: 1; height: 100%; width: 100%; }
 
-    .leaflet-popup-content { margin: 12px; min-width: 270px; line-height: 1.4; max-height: 380px; overflow-y: auto; }
+    .leaflet-popup-content { margin: 12px; min-width: 260px; line-height: 1.4; max-height: 350px; overflow-y: auto; }
     .leaflet-popup-content table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px !important; }
     .leaflet-popup-content th, .leaflet-popup-content td { border: 1px solid #ccc; padding: 5px 7px; text-align: left; }
     .leaflet-popup-content td:first-child { background-color: #f2f7fc; font-weight: bold; width: 40%; color: #333; }
     .leaflet-popup-content td:nth-child(2) { color: #111; word-break: break-all; }
 
-    /* ปุ่มฟังก์ชันใน Popup */
+    /* ปุ่มวัดระยะใน Popup */
     .btn-measure-popup {
-      margin-top: 8px; width: 100%; background: #E91E63; color: white;
-      border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px;
-      font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+      margin-top: 8px;
+      width: 100%;
+      background: #E91E63;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
     }
     .btn-measure-popup:hover { background: #C2185B; }
 
-    .transfer-box {
-      margin-top: 8px; padding: 8px; background: #F1F8E9; border: 1px solid #C5E1A5; border-radius: 6px;
+    /* แถบไม้บรรทัดวัดระยะทาง */
+    .leaflet-control-measure {
+      background: #ffffff;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      border: 1px solid #ccc;
     }
-    .transfer-box select { width: 100%; padding: 4px; font-size: 11px; margin-top: 4px; border-radius: 4px; border: 1px solid #9CCC65; outline: none; }
-    .btn-transfer-popup {
-      margin-top: 6px; width: 100%; background: #43A047; color: white; border: none;
-      padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;
+    .measure-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      font-size: 17px;
+      background: white;
+      border: none;
+      border-radius: 6px;
+      transition: background 0.2s;
     }
-    .btn-transfer-popup:hover { background: #2E7D32; }
-    .btn-reset-plot {
-      margin-top: 4px; width: 100%; background: #FF9800; color: white; border: none;
-      padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;
+    .measure-btn:hover { background: #f0f4f8; }
+    .measure-btn.active {
+      background: #e91e63;
+      color: white;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
     }
-
-    /* แถบควบคุมบนแผนที่ */
-    .top-controls-container {
-      position: absolute; top: 12px; right: 60px; z-index: 1100;
-      display: flex; gap: 8px;
+    .measure-panel {
+      display: none;
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1200;
+      background: rgba(33, 33, 33, 0.95);
+      color: white;
+      padding: 8px 14px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
-    .top-ctrl-btn {
-      background: white; border: 1px solid #bbb; padding: 6px 12px; border-radius: 6px;
-      font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      display: flex; align-items: center; gap: 4px; color: #333;
+    .measure-panel button {
+      border: none;
+      padding: 4px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: opacity 0.2s;
     }
-    .top-ctrl-btn:hover { background: #f5f5f5; }
-    .top-ctrl-btn.active { background: #E91E63; color: white; border-color: #C2185B; }
-    .top-ctrl-btn.active-reassign { background: #2E7D32; color: white; border-color: #1B5E20; }
-
-    /* แถบแจ้งเตือนด้านบน */
-    .top-floating-panel {
-      display: none; position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-      z-index: 1200; background: rgba(33, 33, 33, 0.95); color: white;
-      padding: 8px 16px; border-radius: 24px; font-size: 13px; font-weight: 500;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.35); align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
-    }
-    .top-floating-panel button {
-      border: none; padding: 4px 10px; border-radius: 12px; cursor: pointer; font-size: 11px; font-weight: 600;
-    }
-
+    .measure-panel button:hover { opacity: 0.85; }
+    
+    .btn-undo-measure { background: #FF9800; color: white; }
+    .btn-clear-measure { background: #E91E63; color: white; }
+    .btn-close-measure { background: #555; color: white; }
+    
     .measure-tooltip {
-      background: #e91e63; border: 1px solid #ffffff; color: white; font-weight: bold;
-      font-size: 11px; padding: 2px 6px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      background: #e91e63;
+      border: 1px solid #ffffff;
+      color: white;
+      font-weight: bold;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
     .measure-tooltip:before { border-top-color: #e91e63; }
 
-    .measuring-mode .leaflet-popup-pane { display: none !important; }
-    .measuring-mode, .measuring-mode * { cursor: crosshair !important; }
+    /* ซ่อน Popup เมื่ออยู่ในโหมดวัดระยะทาง */
+    .measuring-mode .leaflet-popup-pane {
+      display: none !important;
+    }
 
-    /* Modal */
-    .modal-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;
+    /* เปลี่ยนเคอร์เซอร์เมาส์ตอนวัดระยะทางให้เป็นเป้าเล็งกากบาททุกจุด */
+    .measuring-mode,
+    .measuring-mode * {
+      cursor: crosshair !important;
     }
-    .modal-box {
-      background: white; border-radius: 8px; width: 90%; max-width: 650px; max-height: 80vh;
-      display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-    }
-    .modal-header { padding: 12px 16px; background: #1565C0; color: white; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 14px; overflow-y: auto; flex: 1; font-size: 12px; }
-    .modal-body table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    .modal-body th, .modal-body td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
-    .modal-body th { background: #f5f5f5; }
-    .modal-footer { padding: 10px 14px; background: #f9f9f9; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #eee; }
 
     @media (max-width: 768px) {
       .mobile-menu-btn { display: block; }
       .btn-close-sidebar { display: block; }
-      .top-controls-container { top: 55px; right: 10px; }
       #sidebar { position: absolute; top: 0; left: 0; width: 82%; max-width: 320px; transform: translateX(-100%); box-shadow: 4px 0 15px rgba(0,0,0,0.3); }
       #sidebar.active { transform: translateX(0); }
       .sidebar-overlay.active { display: block; }
@@ -169,25 +191,12 @@
   <button id="mobileMenuBtn" class="mobile-menu-btn">📂 กลุ่มคิว / ค้นหา</button>
   <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-  <!-- แถบปุ่มลัดด้านบนขวา -->
-  <div class="top-controls-container">
-    <button id="btnQuickReassignMode" class="top-ctrl-btn">🔄 จัดกลุ่มด่วน</button>
-    <button id="btnOpenChangeLog" class="top-ctrl-btn">📋 รายการย้าย (<span id="reassignCountBadge">0</span>)</button>
-  </div>
-
   <!-- แถบแจ้งเตือนสถานะวัดระยะทาง -->
-  <div id="measurePanel" class="top-floating-panel">
+  <div id="measurePanel" class="measure-panel">
     <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b></span>
-    <button id="btnUndoMeasure" style="background:#FF9800; color:white;">↩️ ลบจุดล่าสุด</button>
-    <button id="btnClearMeasure" style="background:#E91E63; color:white;">🗑️ ล้างทั้งหมด</button>
-    <button id="btnExitMeasure" style="background:#555; color:white;">✕ ปิด</button>
-  </div>
-
-  <!-- แถบแจ้งเตือนโหมดจัดกลุ่มต่อเนื่อง -->
-  <div id="reassignPanel" class="top-floating-panel">
-    <span>🎯 กำลังจัดกลุ่มเข้า: <select id="batchTargetGroupSelect" style="font-size:11px; padding:3px; border-radius:4px;"></select></span>
-    <span style="font-size:11px; opacity:0.85;">(คลิกแปลงใดๆ เพื่อย้ายเข้ากลุ่มนี้ทันที)</span>
-    <button id="btnExitReassignMode" style="background:#555; color:white;">✕ ออกจากโหมด</button>
+    <button id="btnUndoMeasure" class="btn-undo-measure" title="ลบจุดล่าสุดที่เพิ่งคลิก">↩️ ลบจุดล่าสุด</button>
+    <button id="btnClearMeasure" class="btn-clear-measure" title="ล้างจุดทั้งหมด">🗑️ ล้างทั้งหมด</button>
+    <button id="btnExitMeasure" class="btn-close-measure">✕ ปิด</button>
   </div>
 
   <div id="sidebar">
@@ -200,19 +209,6 @@
     </div>
 
     <div class="sidebar-content">
-      <!-- กล่องสลับโปรเจกต์จำลองแผน (Scenario Manager) -->
-      <div class="scenario-box">
-        <div class="scenario-box-title">
-          <span>📁 โปรเจกต์ / แผนงาน</span>
-          <span id="scenarioStatusBadge" style="font-size:10px; background:#FFE082; color:#5D4037; padding:1px 5px; border-radius:4px;">แผนจริง</span>
-        </div>
-        <select id="scenarioSelector" class="scenario-select"></select>
-        <div class="scenario-actions">
-          <button id="btnNewScenario" class="btn-sc-action" style="background:#43A047; color:white;">+ สร้างแผนใหม่</button>
-          <button id="btnDeleteScenario" class="btn-sc-action" style="background:#E53935; color:white; display:none;">ลบแผนนี้</button>
-        </div>
-      </div>
-
       <div id="errorMessage">
         ⚠️ <b>โหลดแผนที่ไม่ได้ (0 แปลง)</b><br>
         ระบบค้นหาไฟล์ไม่เจอ ให้ตรวจสอบว่าเปิดผ่านเว็บเซิร์ฟเวอร์ (GitHub Pages หรือ Live Server) แล้วหรือไม่
@@ -247,34 +243,6 @@
   </div>
 
   <div id="map"></div>
-
-  <!-- Modal สรุปประวัติการย้ายแปลง -->
-  <div id="logModal" class="modal-overlay">
-    <div class="modal-box">
-      <div class="modal-header">
-        <span style="font-weight:bold;">📋 สรุปรายการแปลงที่มีการปรับย้ายกลุ่มคิว (<span id="modalScenarioName"></span>)</span>
-        <button id="btnCloseModal" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="emptyLogText" style="text-align:center; color:#888; padding:20px;">ยังไม่มีการย้ายกลุ่มแปลงในแผนนี้</div>
-        <table id="logTable" style="display:none;">
-          <thead>
-            <tr>
-              <th>รหัสแปลง</th>
-              <th>กลุ่มคิวเดิม</th>
-              <th>➔ กลุ่มคิวใหม่</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody id="logTableBody"></tbody>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button id="btnExportCSV" style="background:#2E7D32; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">📥 ส่งออกไฟล์ CSV/Excel</button>
-        <button id="btnCloseModalBtn" style="background:#888; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">ปิด</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Leaflet & toGeoJSON -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -313,39 +281,6 @@
     
     const subColorMap = {};
     const subGroupPlotsMap = {};
-    const allKnownSubKeys = new Set();
-    const plotRegistry = {}; // เก็บอ็อบเจกต์ plot ตาม ID
-
-    /* =========================================================
-       โครงสร้าง Scenario / Project Management
-       ========================================================= */
-    const SCENARIO_STORAGE_KEY = 'sugar_cane_scenarios_v1';
-    let currentScenarioId = 'original';
-    let scenarios = {
-      'original': {
-        name: '📌 แผนตั้งต้น (Original KML)',
-        overrides: {} // เก็บ plotId: newSubKey
-      }
-    };
-
-    // โหลดแผนที่บันทึกไว้ใน LocalStorage
-    function loadSavedScenarios() {
-      try {
-        const saved = localStorage.getItem(SCENARIO_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          scenarios = Object.assign(scenarios, parsed);
-        }
-      } catch (e) { console.warn('Cannot load scenarios from storage', e); }
-    }
-
-    function saveScenariosToStorage() {
-      try {
-        const toSave = Object.assign({}, scenarios);
-        delete toSave['original']; // ไม่เซฟทับ original
-        localStorage.setItem(SCENARIO_STORAGE_KEY, JSON.stringify(toSave));
-      } catch (e) { console.warn('Cannot save scenarios', e); }
-    }
 
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri World Imagery', maxZoom: 19 });
     const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OpenStreetMap', maxZoom: 19 });
@@ -353,7 +288,7 @@
     const map = L.map('map', { center: [14.88, 103.49], zoom: 12, preferCanvas: true, layers: [satelliteLayer] });
     L.control.layers({ "ภาพถ่ายดาวเทียม": satelliteLayer, "แผนที่ถนน": osmLayer }, null, { position: 'topright' }).addTo(map);
 
-    let treeData = {};
+    const treeData = {};
     const subGroupLayers = {}; 
     let searchIndex = [];
     const totalBounds = L.latLngBounds([]);
@@ -394,7 +329,6 @@
     map.addControl(new MeasureControl());
 
     function toggleMeasureMode() {
-      if (isBatchReassigning) toggleBatchReassignMode();
       isMeasuring = !isMeasuring;
       const btn = document.getElementById('measureToggleBtn');
       const mapContainer = map.getContainer();
@@ -413,7 +347,9 @@
     }
 
     function formatDistance(meters) {
-      if (meters >= 1000) return (meters / 1000).toFixed(2) + ' กม.';
+      if (meters >= 1000) {
+        return (meters / 1000).toFixed(2) + ' กม.';
+      }
       return Math.round(meters) + ' ม.';
     }
 
@@ -426,34 +362,65 @@
     }
 
     function redrawMeasureLine() {
-      if (measureLine) { map.removeLayer(measureLine); measureLine = null; }
-      if (measurePoints.length > 1) {
-        measureLine = L.polyline(measurePoints, { color: '#E91E63', weight: 3.5, dashArray: '6, 8', opacity: 0.95 }).addTo(map);
+      if (measureLine) {
+        map.removeLayer(measureLine);
+        measureLine = null;
       }
+
+      if (measurePoints.length > 1) {
+        measureLine = L.polyline(measurePoints, {
+          color: '#E91E63',
+          weight: 3.5,
+          dashArray: '6, 8',
+          opacity: 0.95
+        }).addTo(map);
+      }
+
       const totalDist = calculateTotalDistance();
       measureTotalDist.innerText = formatDistance(totalDist);
     }
 
     function addMeasurePoint(latlng) {
       measurePoints.push(latlng);
-      const marker = L.circleMarker(latlng, { radius: 4.5, color: '#E91E63', fillColor: '#FFFFFF', fillOpacity: 1, weight: 2 }).addTo(map);
+
+      const marker = L.circleMarker(latlng, {
+        radius: 4.5,
+        color: '#E91E63',
+        fillColor: '#FFFFFF',
+        fillOpacity: 1,
+        weight: 2
+      }).addTo(map);
       measureMarkers.push(marker);
+
       const totalDist = calculateTotalDistance();
       measureTotalDist.innerText = formatDistance(totalDist);
 
       if (measurePoints.length > 1) {
         redrawMeasureLine();
-        marker.bindTooltip(formatDistance(totalDist), { permanent: true, direction: 'top', className: 'measure-tooltip', offset: [0, -5] }).openTooltip();
+
+        marker.bindTooltip(formatDistance(totalDist), {
+          permanent: true,
+          direction: 'top',
+          className: 'measure-tooltip',
+          offset: [0, -5]
+        }).openTooltip();
       } else {
-        marker.bindTooltip("จุดเริ่ม", { permanent: true, direction: 'top', className: 'measure-tooltip', offset: [0, -5] }).openTooltip();
+        marker.bindTooltip("จุดเริ่ม", {
+          permanent: true,
+          direction: 'top',
+          className: 'measure-tooltip',
+          offset: [0, -5]
+        }).openTooltip();
       }
     }
 
     function undoLastMeasurePoint() {
       if (measurePoints.length === 0) return;
+
       measurePoints.pop();
       const lastMarker = measureMarkers.pop();
       if (lastMarker) map.removeLayer(lastMarker);
+
       redrawMeasureLine();
     }
 
@@ -461,353 +428,56 @@
       measurePoints = [];
       measureMarkers.forEach(m => map.removeLayer(m));
       measureMarkers = [];
-      if (measureLine) { map.removeLayer(measureLine); measureLine = null; }
+      if (measureLine) {
+        map.removeLayer(measureLine);
+        measureLine = null;
+      }
       measureTotalDist.innerText = '0 ม.';
     }
 
     window.startMeasureFromPlot = function(lat, lng) {
-      if (!isMeasuring) toggleMeasureMode(); else clearMeasure();
+      if (!isMeasuring) {
+        toggleMeasureMode();
+      } else {
+        clearMeasure();
+      }
       map.closePopup();
       addMeasurePoint(L.latLng(lat, lng));
     };
 
-    map.on('click', function(e) { if (isMeasuring) addMeasurePoint(e.latlng); });
-    map.on('contextmenu', function(e) { if (isMeasuring) { e.originalEvent.preventDefault(); undoLastMeasurePoint(); } });
+    map.on('click', function(e) {
+      if (!isMeasuring) return;
+      addMeasurePoint(e.latlng);
+    });
+
+    map.on('contextmenu', function(e) {
+      if (isMeasuring) {
+        e.originalEvent.preventDefault();
+        undoLastMeasurePoint();
+      }
+    });
 
     document.getElementById('btnUndoMeasure').addEventListener('click', undoLastMeasurePoint);
     document.getElementById('btnClearMeasure').addEventListener('click', clearMeasure);
     document.getElementById('btnExitMeasure').addEventListener('click', toggleMeasureMode);
 
     /* =========================================================
-       ระบบสลับและจัดการ Scenario / Project
-       ========================================================= */
-    const scenarioSelector = document.getElementById('scenarioSelector');
-    const scenarioStatusBadge = document.getElementById('scenarioStatusBadge');
-    const btnNewScenario = document.getElementById('btnNewScenario');
-    const btnDeleteScenario = document.getElementById('btnDeleteScenario');
-    const reassignBadge = document.getElementById('reassignCountBadge');
-
-    function updateScenarioSelectorUI() {
-      scenarioSelector.innerHTML = '';
-      for (const [id, sc] of Object.entries(scenarios)) {
-        const opt = document.createElement('option');
-        opt.value = id;
-        opt.innerText = sc.name;
-        if (id === currentScenarioId) opt.selected = true;
-        scenarioSelector.appendChild(opt);
-      }
-
-      if (currentScenarioId === 'original') {
-        scenarioStatusBadge.innerText = 'แผนจริง (Original)';
-        scenarioStatusBadge.style.background = '#E0E0E0';
-        scenarioStatusBadge.style.color = '#333';
-        btnDeleteScenario.style.display = 'none';
-      } else {
-        scenarioStatusBadge.innerText = 'โหมดจำลองแผน';
-        scenarioStatusBadge.style.background = '#C8E6C9';
-        scenarioStatusBadge.style.color = '#2E7D32';
-        btnDeleteScenario.style.display = 'block';
-      }
-
-      const activeOverrides = scenarios[currentScenarioId]?.overrides || {};
-      reassignBadge.innerText = Object.keys(activeOverrides).length;
-    }
-
-    scenarioSelector.addEventListener('change', function() {
-      switchScenario(this.value);
-    });
-
-    btnNewScenario.addEventListener('click', function() {
-      const name = prompt('ตั้งชื่อโปรเจกต์ / แผนงานใหม่ เช่น "แผน A - จัดโซนใหม่":');
-      if (!name || !name.trim()) return;
-      const newId = `sc_${Date.now()}`;
-      scenarios[newId] = {
-        name: `📝 ${name.trim()}`,
-        overrides: Object.assign({}, scenarios[currentScenarioId].overrides || {}) // โคลนแผนปัจจุบันมาเป็นฐาน
-      };
-      saveScenariosToStorage();
-      switchScenario(newId);
-    });
-
-    btnDeleteScenario.addEventListener('click', function() {
-      if (currentScenarioId === 'original') return;
-      if (confirm(`คุณต้องการลบโปรเจกต์ "${scenarios[currentScenarioId].name}" ใช่หรือไม่?`)) {
-        delete scenarios[currentScenarioId];
-        saveScenariosToStorage();
-        switchScenario('original');
-      }
-    });
-
-    function switchScenario(scenarioId) {
-      currentScenarioId = scenarioId;
-      updateScenarioSelectorUI();
-      applyCurrentScenario();
-    }
-
-    // นำการย้ายกลุ่มของ Scenario ปัจจุบันมาเรนเดอร์ใหม่
-    function applyCurrentScenario() {
-      const overrides = scenarios[currentScenarioId]?.overrides || {};
-
-      // 1. เคลียร์ Layers เดิมทั้งหมด
-      Object.keys(subGroupLayers).forEach(k => subGroupLayers[k].clearLayers());
-      treeData = {};
-      searchIndex = [];
-      Object.keys(subGroupPlotsMap).forEach(k => subGroupPlotsMap[k] = []);
-
-      // 2. วนลูปคืนค่าหรือตั้งค่าแปลงใหม่
-      Object.values(plotRegistry).forEach(plot => {
-        const assignedSubKey = overrides[plot.uniqueId] || plot.origSubKey;
-        const [mainG, subG] = assignedSubKey.split(':::');
-
-        plot.mainGroup = mainG;
-        plot.subGroup = subG;
-        plot.subKey = assignedSubKey;
-        plot.props.main_grp = mainG;
-        plot.props.sub_grp = subG;
-        plot.isMoved = (assignedSubKey !== plot.origSubKey);
-
-        if (!subColorMap[assignedSubKey]) {
-          const colorIdx = Object.keys(subColorMap).length % palette.length;
-          subColorMap[assignedSubKey] = palette[colorIdx];
-        }
-        const color = subColorMap[assignedSubKey];
-        plot.color = color;
-
-        if (plot.layer.setStyle) {
-          plot.layer.setStyle({ color: color, fillColor: color, weight: plot.isMoved ? 3 : 2 });
-        }
-
-        if (!subGroupLayers[assignedSubKey]) subGroupLayers[assignedSubKey] = L.layerGroup().addTo(map);
-        subGroupLayers[assignedSubKey].addLayer(plot.layer);
-
-        if (!treeData[mainG]) treeData[mainG] = {};
-        if (!treeData[mainG][subG]) treeData[mainG][subG] = [];
-        treeData[mainG][subG].push(plot);
-        searchIndex.push(plot);
-
-        if (!subGroupPlotsMap[assignedSubKey]) subGroupPlotsMap[assignedSubKey] = [];
-        subGroupPlotsMap[assignedSubKey].push(plot);
-
-        const center = getPlotCenterLatLng(plot.layer);
-        plot.layer.bindPopup(createPopupContent(plot.name, mainG, subG, color, plot.props, center, plot.uniqueId));
-      });
-
-      buildHierarchyUI();
-    }
-
-    // ย้ายแปลงใน Scenario ปัจจุบัน
-    function transferPlotInScenario(plotId, newSubKey) {
-      if (currentScenarioId === 'original') {
-        const createNew = confirm('คุณกำลังอยู่ใน "แผนตั้งต้น" หากต้องการย้ายแปลง ระบบจะสร้างโปรเจกต์ใหม่ให้ทันที ต้องการสร้างหรือไม่?');
-        if (createNew) {
-          const newId = `sc_${Date.now()}`;
-          scenarios[newId] = {
-            name: `📝 แผนทดลอง (${new Date().toLocaleDateString('th-TH')})`,
-            overrides: {}
-          };
-          currentScenarioId = newId;
-          updateScenarioSelectorUI();
-        } else {
-          return;
-        }
-      }
-
-      const plot = plotRegistry[plotId];
-      if (!plot) return;
-
-      if (newSubKey === plot.origSubKey) {
-        delete scenarios[currentScenarioId].overrides[plotId];
-      } else {
-        scenarios[currentScenarioId].overrides[plotId] = newSubKey;
-      }
-
-      saveScenariosToStorage();
-      applyCurrentScenario();
-
-      // Highlight animation
-      if (plot.layer.setStyle) {
-        plot.layer.setStyle({ color: '#FFD600', weight: 6, fillOpacity: 0.85 });
-        setTimeout(() => { plot.layer.setStyle({ color: plot.color, weight: plot.isMoved ? 3 : 2, fillOpacity: 0.35 }); }, 1200);
-      }
-    }
-
-    // คืนค่าเฉพาะแปลงนั้นกลับกลุ่มเดิม
-    window.resetSinglePlotToOriginal = function(plotId) {
-      transferPlotInScenario(plotId, plotRegistry[plotId].origSubKey);
-      map.closePopup();
-    };
-
-    /* =========================================================
-       โหมดจัดกลุ่มด่วน (Batch Reassign)
-       ========================================================= */
-    let isBatchReassigning = false;
-    const reassignPanel = document.getElementById('reassignPanel');
-    const batchTargetSelect = document.getElementById('batchTargetGroupSelect');
-    const btnQuickReassign = document.getElementById('btnQuickReassignMode');
-
-    function populateGroupSelectOptions(selectElem, currentSubKey) {
-      selectElem.innerHTML = '';
-      const sortedKeys = Array.from(allKnownSubKeys).sort();
-      sortedKeys.forEach(key => {
-        const [mainG, subG] = key.split(':::');
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.innerText = `${mainG} ➔ ${subG}`;
-        if (key === currentSubKey) opt.selected = true;
-        selectElem.appendChild(opt);
-      });
-    }
-
-    function toggleBatchReassignMode() {
-      if (isMeasuring) toggleMeasureMode();
-      isBatchReassigning = !isBatchReassigning;
-
-      if (isBatchReassigning) {
-        if (currentScenarioId === 'original') {
-          const newId = `sc_${Date.now()}`;
-          scenarios[newId] = {
-            name: `📝 แผนทดลอง (${new Date().toLocaleDateString('th-TH')})`,
-            overrides: {}
-          };
-          currentScenarioId = newId;
-          updateScenarioSelectorUI();
-        }
-        btnQuickReassign.classList.add('active-reassign');
-        reassignPanel.style.display = 'flex';
-        populateGroupSelectOptions(batchTargetSelect, Array.from(allKnownSubKeys)[0]);
-        map.closePopup();
-      } else {
-        btnQuickReassign.classList.remove('active-reassign');
-        reassignPanel.style.display = 'none';
-      }
-    }
-
-    btnQuickReassign.addEventListener('click', toggleBatchReassignMode);
-    document.getElementById('btnExitReassignMode').addEventListener('click', toggleBatchReassignMode);
-
-    /* =========================================================
-       Modal และระบบส่งออก Log ประวัติการย้าย
-       ========================================================= */
-    const logModal = document.getElementById('logModal');
-    const logTable = document.getElementById('logTable');
-    const logTableBody = document.getElementById('logTableBody');
-    const emptyLogText = document.getElementById('emptyLogText');
-    const modalScenarioName = document.getElementById('modalScenarioName');
-
-document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
-      modalScenarioName.innerText = scenarios[currentScenarioId].name;
-      const overrides = scenarios[currentScenarioId]?.overrides || {};
-      const movedPlotIds = Object.keys(overrides);
-
-      if (movedPlotIds.length === 0) {
-        emptyLogText.style.display = 'block';
-        logTable.style.display = 'none';
-      } else {
-        emptyLogText.style.display = 'none';
-        logTable.style.display = 'table';
-        logTableBody.innerHTML = '';
-
-        movedPlotIds.forEach(id => {
-          const plot = plotRegistry[id];
-          if (!plot) return;
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>
-              <span style="color: #1565C0; font-weight: bold; cursor: pointer; text-decoration: underline;" 
-                    title="คลิกเพื่อไปยังแปลงนี้" 
-                    onclick="focusPlotFromModal('${id}')">
-                📍 ${plot.name}
-              </span>
-            </td>
-            <td style="color:#c62828;">${plot.origSubKey.replace(':::', ' > ')}</td>
-            <td style="color:#2e7d32; font-weight:bold;">${plot.subKey.replace(':::', ' > ')}</td>
-            <td>
-              <button onclick="resetSinglePlotToOriginal('${id}'); this.closest('tr').remove(); if(document.querySelectorAll('#logTableBody tr').length === 0) { emptyLogText.style.display='block'; logTable.style.display='none'; }" 
-                      style="background:#FF9800; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">
-                คืนค่า
-              </button>
-            </td>
-          `;
-          logTableBody.appendChild(tr);
-        });
-      }
-      logModal.style.display = 'flex';
-    });
-
-    // ฟังก์ชันคลิกจาก Modal แล้วปิดหน้าต่างพร้อมซูมไปหาแปลงทันที
-    window.focusPlotFromModal = function(plotId) {
-      logModal.style.display = 'none';
-      const plot = plotRegistry[plotId];
-      if (plot) {
-        focusPlot(plot);
-      }
-    };
-
-    document.getElementById('btnCloseModal').addEventListener('click', () => { logModal.style.display = 'none'; });
-    document.getElementById('btnCloseModalBtn').addEventListener('click', () => { logModal.style.display = 'none'; });
-
-    document.getElementById('btnExportCSV').addEventListener('click', () => {
-      const overrides = scenarios[currentScenarioId]?.overrides || {};
-      const movedPlotIds = Object.keys(overrides);
-      if (movedPlotIds.length === 0) { alert('ไม่มีรายการย้ายกลุ่มในแผนนี้'); return; }
-
-      let csvContent = '\uFEFFรหัสแปลง,กลุ่มคิวเดิม,กลุ่มคิวใหม่,สถานะ\n';
-      movedPlotIds.forEach(id => {
-        const plot = plotRegistry[id];
-        if (plot) {
-          csvContent += `"${plot.name}","${plot.origSubKey.replace(':::', ' > ')}","${plot.subKey.replace(':::', ' > ')}","ย้ายกลุ่มแล้ว"\n`;
-        }
-      });
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `รายการย้ายกลุ่ม_${scenarios[currentScenarioId].name.replace(/[^a-zA-Z0-9ก-๙]/g, '_')}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-
-    /* =========================================================
        ระบบอ่านข้อมูล KML และแสดงผลแปลง
        ========================================================= */
     function getPlotCenterLatLng(layer) {
-      if (layer.getBounds && layer.getBounds().isValid()) return layer.getBounds().getCenter();
-      if (layer.getLatLng) return layer.getLatLng();
+      if (layer.getBounds && layer.getBounds().isValid()) {
+        return layer.getBounds().getCenter();
+      } else if (layer.getLatLng) {
+        return layer.getLatLng();
+      }
       return null;
     }
 
-    function createPopupContent(name, groupName, subGroup, color, props, centerLatLng, plotUniqueId) {
-      const currentSubKey = `${groupName}:::${subGroup}`;
-      const plot = plotRegistry[plotUniqueId];
-      const isMoved = plot && plot.isMoved;
-
+    function createPopupContent(name, groupName, subGroup, color, props, centerLatLng) {
       let content = `<div style="font-size: 13px;">`;
-      content += `<strong style="font-size: 15px; color: ${color};">📍 รหัสแปลง: ${name}</strong>`;
-      if (isMoved) content += ` <span class="badge-moved">ย้ายกลุ่มแล้ว</span>`;
-      content += `<br/><span style="font-size: 12px; color: #555;"><b>กลุ่ม:</b> ${groupName} | <b>กลุ่มย่อย:</b> ${subGroup}</span>`;
+      content += `<strong style="font-size: 15px; color: ${color};">📍 รหัสแปลง: ${name}</strong><br/>`;
+      content += `<span style="font-size: 12px; color: #555;"><b>กลุ่ม:</b> ${groupName} | <b>กลุ่มย่อย:</b> ${subGroup}</span>`;
       
-      // ส่วนย้ายกลุ่มคิว
-      content += `
-        <div class="transfer-box">
-          <label style="font-weight:bold; font-size:11px; color:#33691E;">🔄 ย้ายแปลงนี้ไปกลุ่มคิวอื่น:</label>
-          <select id="popupSelectGroup_${plotUniqueId}">`;
-      
-      Array.from(allKnownSubKeys).sort().forEach(k => {
-        const [m, s] = k.split(':::');
-        content += `<option value="${k}" ${k === currentSubKey ? 'selected' : ''}>${m} > ${s}</option>`;
-      });
-
-      content += `
-          </select>
-          <button class="btn-transfer-popup" onclick="handlePopupTransfer('${plotUniqueId}')">บันทึกการย้ายกลุ่ม</button>`;
-      
-      if (isMoved) {
-        content += `<button class="btn-reset-plot" onclick="resetSinglePlotToOriginal('${plotUniqueId}')">↩️ คืนกลับกลุ่มเดิม (${plot.origSubKey.replace(':::', ' > ')})</button>`;
-      }
-      content += `</div>`;
-
       if (centerLatLng) {
         content += `<button class="btn-measure-popup" onclick="startMeasureFromPlot(${centerLatLng.lat}, ${centerLatLng.lng})">📏 เริ่มวัดระยะจากแปลงนี้</button>`;
       }
@@ -827,17 +497,15 @@ document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
         }
       }
 
-      content += rows ? `<table>${rows}</table>` : `<p style="color: #777; font-size: 11px; margin-top: 6px;">ไม่มีข้อมูลคุณลักษณะเพิ่มเติม</p>`;
+      if (rows) {
+        content += `<table>${rows}</table>`;
+      } else {
+        content += `<p style="color: #777; font-size: 11px; margin-top: 6px;">ไม่มีข้อมูลคุณลักษณะเพิ่มเติม</p>`;
+      }
+
       content += `</div>`;
       return content;
     }
-
-    window.handlePopupTransfer = function(plotUniqueId) {
-      const select = document.getElementById(`popupSelectGroup_${plotUniqueId}`);
-      if (!select) return;
-      transferPlotInScenario(plotUniqueId, select.value);
-      map.closePopup();
-    };
 
     function processKmlXml(xmlDoc, defaultFileName) {
       let fallbackName = defaultFileName.split('/').pop().replace(/\.kml$/i, '');
@@ -913,51 +581,61 @@ document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
         props.sub_grp = subGroup;
 
         let plotName = props['รหัสแปลง'] || props['PLOT_ID'] || props['plot_id'] || props['FID'] || props.name || 'ไม่มีรหัส';
-        const uniqueId = `plot_${plotName}_${Math.random().toString(36).substr(2, 5)}`;
-        const subKey = `${mainGroup}:::${subGroup}`;
-        allKnownSubKeys.add(subKey);
 
+        const subKey = `${mainGroup}:::${subGroup}`;
         if (!subColorMap[subKey]) {
           const colorIdx = Object.keys(subColorMap).length % palette.length;
           subColorMap[subKey] = palette[colorIdx];
         }
         const color = subColorMap[subKey];
 
+        if (!subGroupLayers[subKey]) subGroupLayers[subKey] = L.layerGroup().addTo(map);
+
         const layer = L.geoJSON(feature, {
           style: { color: color, weight: 2, opacity: 0.9, fillColor: color, fillOpacity: 0.35 },
           pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5, fillColor: color, color: '#FFF', weight: 1, fillOpacity: 0.9 }),
           onEachFeature: (f, l) => { 
             const center = getPlotCenterLatLng(l);
-            l.bindPopup(createPopupContent(plotName, mainGroup, subGroup, color, props, center, uniqueId)); 
+            l.bindPopup(createPopupContent(plotName, mainGroup, subGroup, color, props, center)); 
 
+            // ดักจับการคลิกที่แปลงขณะวัดระยะทาง
             l.on('click', (e) => {
               if (isMeasuring) {
                 if (l.closePopup) l.closePopup();
                 addMeasurePoint(e.latlng);
-              } else if (isBatchReassigning) {
-                if (l.closePopup) l.closePopup();
-                transferPlotInScenario(uniqueId, batchTargetSelect.value);
               }
             });
           }
         });
 
-        const plotObj = {
-          uniqueId: uniqueId,
-          name: plotName,
-          mainGroup: mainGroup,
-          subGroup: subGroup,
-          subKey: subKey,
-          origSubKey: subKey, // เก็บกลุ่มดั้งเดิมจากไฟล์ KML ไว้เสมอ
-          layer: layer,
-          color: color,
-          props: props,
-          isMoved: false
-        };
+        subGroupLayers[subKey].addLayer(layer);
 
-        plotRegistry[uniqueId] = plotObj;
+        if (!treeData[mainGroup]) treeData[mainGroup] = {};
+        if (!treeData[mainGroup][subGroup]) treeData[mainGroup][subGroup] = [];
+
+        const plotObj = { name: plotName, mainGroup: mainGroup, subGroup: subGroup, subKey: subKey, layer: layer, color: color, props: props };
+        treeData[mainGroup][subGroup].push(plotObj);
+        searchIndex.push(plotObj);
+
+        if (!subGroupPlotsMap[subKey]) subGroupPlotsMap[subKey] = [];
+        subGroupPlotsMap[subKey].push(plotObj);
+
         if (layer.getBounds && layer.getBounds().isValid()) totalBounds.extend(layer.getBounds());
       });
+    }
+
+    function updateSubGroupColor(subKey, newColor) {
+      subColorMap[subKey] = newColor;
+      if (subGroupPlotsMap[subKey]) {
+        subGroupPlotsMap[subKey].forEach(plot => {
+          plot.color = newColor;
+          if (plot.layer.setStyle) {
+            plot.layer.setStyle({ color: newColor, fillColor: newColor });
+          }
+          const center = getPlotCenterLatLng(plot.layer);
+          plot.layer.bindPopup(createPopupContent(plot.name, plot.mainGroup, plot.subGroup, newColor, plot.props, center));
+        });
+      }
     }
 
     function syncSelectAllBtn() {
@@ -975,6 +653,7 @@ document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
     document.getElementById('selectAllGroups').addEventListener('change', function() {
       const isChecked = this.checked;
       document.getElementById('selectAllText').innerText = isChecked ? 'เปิดทั้งหมด' : 'ปิดทั้งหมด';
+      
       document.querySelectorAll('.cb-group, .cb-sub').forEach(cb => { cb.checked = isChecked; });
 
       Object.keys(subGroupLayers).forEach(key => {
@@ -1029,7 +708,8 @@ document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
             <div class="node-left">
               <span class="caret caret-sub">▶</span>
               <input type="checkbox" checked class="cb-sub" data-key="${subKey}" />
-              <span class="color-dot" style="background:${subColor};"></span>
+              <span class="color-dot" style="background:${subColor};" title="คลิกเพื่อเปลี่ยนสี" data-subkey="${subKey}"></span>
+              <input type="color" class="color-picker-input" data-subkey="${subKey}" value="${subColor}">
               <span>📁 ${subGroup}</span>
             </div>
             <span class="badge" style="font-size:10px;">${plots.length}</span>`;
@@ -1040,26 +720,39 @@ document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
           plots.forEach(plot => {
             const plotLi = document.createElement('li');
             plotLi.className = 'plot-item';
-            plotLi.innerHTML = `<span>📍 ${plot.name}</span>`;
-            if (plot.isMoved) {
-              plotLi.innerHTML += `<span class="badge-moved">ย้ายแล้ว</span>`;
-            }
+            plotLi.innerHTML = `📍 <span>${plot.name}</span>`;
             plotLi.addEventListener('click', (e) => { e.stopPropagation(); focusPlot(plot); if (window.innerWidth <= 768) closeMobileSidebar(); });
             plotUl.appendChild(plotLi);
           });
 
           subHeader.addEventListener('click', (e) => { 
-            if (e.target.tagName === 'INPUT') return; 
+            if (e.target.tagName === 'INPUT' || e.target.classList.contains('color-dot')) return; 
             const isOpen = plotUl.style.display === 'block'; 
             plotUl.style.display = isOpen ? 'none' : 'block'; 
             subHeader.querySelector('.caret-sub').classList.toggle('open', !isOpen); 
           });
 
+          const colorDot = subHeader.querySelector('.color-dot');
+          const colorInput = subHeader.querySelector('.color-picker-input');
+
+          colorDot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            colorInput.click();
+          });
+
+          colorInput.addEventListener('input', (e) => {
+            const newColor = e.target.value;
+            colorDot.style.backgroundColor = newColor;
+            updateSubGroupColor(subKey, newColor);
+          });
+
           subHeader.querySelector('.cb-sub').addEventListener('change', function () { 
             if (this.checked) map.addLayer(subGroupLayers[subKey]); else map.removeLayer(subGroupLayers[subKey]); 
+            
             const allSubs = Array.from(subUl.querySelectorAll('.cb-sub'));
             const anySubChecked = allSubs.some(cb => cb.checked);
             groupHeader.querySelector('.cb-group').checked = anySubChecked;
+
             syncSelectAllBtn(); 
           });
           subLi.appendChild(subHeader); subLi.appendChild(plotUl); subUl.appendChild(subLi);
@@ -1091,11 +784,10 @@ document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
       }
       if (layer.getBounds && layer.getBounds().isValid()) { map.fitBounds(layer.getBounds(), { padding: [50, 50], maxZoom: 18 }); } else if (layer.getLatLng) { map.setView(layer.getLatLng(), 18); }
       layer.openPopup();
-      if (layer.setStyle) { layer.setStyle({ color: '#FFD600', weight: 5, fillOpacity: 0.75 }); setTimeout(() => { layer.setStyle({ color: plot.color, weight: plot.isMoved ? 3 : 2, opacity: 0.9, fillColor: plot.color, fillOpacity: 0.35 }); }, 2000); }
+      if (layer.setStyle) { layer.setStyle({ color: '#FFD600', weight: 5, fillOpacity: 0.75 }); setTimeout(() => { layer.setStyle({ color: plot.color, weight: 2, opacity: 0.9, fillColor: plot.color, fillOpacity: 0.35 }); }, 2000); }
     }
 
     async function loadAllKmlFiles() {
-      loadSavedScenarios();
       const pLabel = document.getElementById('progressLabel'), pPercent = document.getElementById('progressPercent'), pBar = document.getElementById('progressBar'), pBox = document.getElementById('progressContainer');
       let successCount = 0;
 
@@ -1127,8 +819,7 @@ document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
       } else {
         pLabel.innerText = '✅ โหลดครบสมบูรณ์';
         setTimeout(() => { pBox.style.display = 'none'; }, 1200);
-        updateScenarioSelectorUI();
-        applyCurrentScenario();
+        buildHierarchyUI();
         if (totalBounds.isValid()) map.fitBounds(totalBounds, { padding: [20, 20] });
       }
     }
@@ -1145,9 +836,12 @@ document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
         const nameMatch = i.name.toLowerCase().includes(kw);
         const groupMatch = i.mainGroup.toLowerCase().includes(kw);
         const subMatch = i.subGroup.toLowerCase().includes(kw);
+        
         let propsMatch = false;
         if (i.props) {
-          propsMatch = Object.values(i.props).some(v => v !== null && v !== undefined && String(v).toLowerCase().includes(kw));
+          propsMatch = Object.values(i.props).some(v => 
+            v !== null && v !== undefined && String(v).toLowerCase().includes(kw)
+          );
         }
         return nameMatch || groupMatch || subMatch || propsMatch;
       });
