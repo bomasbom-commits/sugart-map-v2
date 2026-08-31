@@ -439,9 +439,21 @@
 
     /* Utils & Parsing */
     function getPlotCenterLatLng(layer) { return (layer.getBounds && layer.getBounds().isValid()) ? layer.getBounds().getCenter() : layer.getLatLng ? layer.getLatLng() : null; }
+    
+    // ** แก้ไข: เพิ่มคำค้นหาคอลัมน์ผู้รับเหมาให้ครบถ้วน **
     function extractContractorName(props) {
-      for (let k of ['ชื่อ-สกุล รับเหมา', 'ชื่อผู้รับเหมา', 'ผู้รับเหมา', 'CONTRACTOR', 'contractor', 'ชื่อคนตัด']) if (props[k] && String(props[k]).trim()) return String(props[k]).trim();
-      for (let [k,v] of Object.entries(props)) if (k.toLowerCase().includes('รับเหมา') && v && String(v).trim()) return String(v).trim();
+      const contractorKeys = [
+        'ชื่อ-สกุล รับเหมา', 'ชื่อผู้รับเหมา', 'ผู้รับเหมา', 'ชื่อ_สกุล_รับเหมา', 
+        'CONTRACTOR', 'Contractor', 'contractor', 'ชื่อคนตัด', 'คนตัด'
+      ];
+      for (let k of contractorKeys) {
+        if (props[k] && String(props[k]).trim() !== '') return String(props[k]).trim();
+      }
+      for (let [k, v] of Object.entries(props)) {
+        if (k.toLowerCase().includes('รับเหมา') && v && String(v).trim() !== '') {
+          return String(v).trim();
+        }
+      }
       return 'ไม่ระบุผู้รับเหมา';
     }
 
@@ -460,7 +472,7 @@
       if (centerLatLng) c += `<button class="btn-measure-popup" onclick="startMeasureFromPlot(${centerLatLng.lat}, ${centerLatLng.lng})">📏 เริ่มวัดระยะจากแปลงนี้</button>`;
       c += `<hr style="margin:8px 0;border:none;border-top:1px solid #e0e0e0;"/>`;
       
-      let rows = ''; const ignored = ['name', 'main_grp', 'sub_grp', 'unique_id', 'styleUrl', 'styleHash', 'stroke', 'fill', 'icon', 'ExtendedData'];
+      let rows = ''; const ignored = ['name', 'main_grp', 'sub_grp', 'unique_id', 'styleUrl', 'styleHash', 'stroke', 'fill', 'icon', 'ExtendedData', 'contractor'];
       for (const [k, v] of Object.entries(props)) { if (!ignored.includes(k) && v && String(v).trim()) rows += `<tr><td>${k}</td><td>${v}</td></tr>`; }
       c += rows ? `<table>${rows}</table>` : `<p style="color:#777;font-size:11px;">ไม่มีข้อมูลเพิ่มเติม</p>`; return c + `</div>`;
     }
