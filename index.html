@@ -63,7 +63,7 @@
     
     .group-node { border: 1px solid #d0d7de; border-radius: 6px; background: #ffffff; }
     
-    /* ตรึงหัวข้อกลุ่มคิวหลัก ให้อยู่ด้านบนสุดเวลาเลื่อน */
+    /* 1. ตรึงกลุ่มคิวหลัก ให้อยู่บนสุด (top: -12px) */
     .group-header { 
       padding: 8px 10px; background: #f6f8fa; display: flex; align-items: center; justify-content: space-between; 
       cursor: pointer; user-select: none; font-weight: 600; font-size: 13px; 
@@ -75,11 +75,12 @@
     .sub-list { list-style: none; display: none; padding: 2px 0 2px 10px; background: #ffffff; border-top: 1px solid #e0e0e0; }
     .sub-node { margin: 2px 0; }
     
-    /* กลุ่มรถตัด (กลุ่มย่อย) แสดงผลตามปกติ */
+    /* 2. ตรึงกลุ่มรถตัด (กลุ่มย่อย) ให้อยู่ซ้อนใต้กลุ่มคิวหลักพอดี (top: 25px) */
     .sub-header { 
       padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; 
       cursor: pointer; font-size: 12px; font-weight: 500; border-radius: 4px; background: #ffffff; 
-      border-bottom: 1px solid #f0f0f0; 
+      position: sticky; top: 25px; z-index: 15; 
+      border-bottom: 1px solid #f0f0f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
     }
     .sub-header:hover { background: #f0f4f8; }
     
@@ -606,7 +607,7 @@
         const pm = placemarks[i], pmData = {};
         
         Array.from(pm.getElementsByTagName('SimpleData')).forEach(n => { pmData[n.getAttribute('name')] = n.textContent.trim(); });
-        Array.from(pm.getElementsByTagName('Data')).forEach(n => { const v = n.getElementsByTagName('value')[0]; pmData[n.getAttribute('name')] = v ? v.textContent.trim() : n.textContent.trim(); });
+        Array.from(pm.getElementsByTagName('Data')).forEach(n => { const v = pm.getElementsByTagName('value')[0]; pmData[n.getAttribute('name')] = v ? v.textContent.trim() : n.textContent.trim(); });
         
         const desc = pm.getElementsByTagName('description')[0];
         if (desc && desc.textContent && desc.textContent.includes('<table')) {
@@ -684,7 +685,8 @@
         const subGroups = treeData[mainGroup]; let gCount = 0; Object.keys(subGroups).forEach(s => gCount += subGroups[s].length); totalPlots += gCount;
         const gLi = document.createElement('li'); gLi.className = 'group-node';
         
-        gLi.innerHTML = `<div class="group-header"><div class="node-left"><span class="caret">▶</span><input type="checkbox" checked class="cb-group" data-group="${mainGroup}" /><span>📁 ${mainGroup}</span></div><span class="badge">${gCount}</span></div><ul class="sub-list"></ul>`;
+        // ** แก้ไข: เพิ่ม position: sticky ให้กลุ่มคิวหลัก (.group-header) ค้างไว้ด้านบนสุด **
+        gLi.innerHTML = `<div class="group-header" style="position: sticky; top: -12px; z-index: 20; background: #f6f8fa;"><div class="node-left"><span class="caret">▶</span><input type="checkbox" checked class="cb-group" data-group="${mainGroup}" /><span>📁 ${mainGroup}</span></div><span class="badge">${gCount}</span></div><ul class="sub-list"></ul>`;
         const subUl = gLi.querySelector('.sub-list'), gHeader = gLi.querySelector('.group-header');
 
         Object.keys(subGroups).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(subGroup => {
@@ -693,9 +695,9 @@
           
           const sLi = document.createElement('li'); sLi.className = 'sub-node';
           
-          // ** นำ .sub-header กลับคืนมาตามปกติแล้ว **
+          // ** แก้ไข: เพิ่ม position: sticky ให้กลุ่มย่อย (.sub-header) ค้างไว้ซ้อนใต้กลุ่มคิวหลัก (top: 25px) **
           sLi.innerHTML = `
-            <div class="sub-header">
+            <div class="sub-header" style="position: sticky; top: 25px; z-index: 15; background: #ffffff;">
               <div class="node-left" title="${subGroup} ${cList ? '- ' + cList : ''}">
                 <span class="caret caret-sub">▶</span><input type="checkbox" checked class="cb-sub" data-key="${subKey}" />
                 <span class="color-dot" style="background:${color};" title="เปลี่ยนสี"></span><input type="color" class="color-picker-input" value="${color}">
