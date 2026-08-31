@@ -26,7 +26,10 @@
     .sidebar-header h2 { font-size: 16px; font-weight: 600; }
     .sidebar-header p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
     .btn-close-sidebar { display: none; background: none; border: none; color: white; font-size: 20px; cursor: pointer; line-height: 1; }
-    .sidebar-content { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    
+    /* เพิ่มคลาสใหม่สำหรับส่วนที่ถูกตรึง */
+    .sidebar-controls { padding: 12px 12px 0 12px; display: flex; flex-direction: column; gap: 10px; background: #ffffff; z-index: 10; border-bottom: 1px solid #e0e0e0; padding-bottom: 12px; }
+    .sidebar-content { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
 
     /* Scenario Box */
     .scenario-box { background: #FFF8E1; border: 1px solid #FFE082; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
@@ -166,7 +169,8 @@
       <button id="btnCloseSidebar" class="btn-close-sidebar">✕</button>
     </div>
 
-    <div class="sidebar-content">
+    <!-- ส่วนที่ถูกตรึงไว้ (ไม่ขยับ) -->
+    <div class="sidebar-controls">
       <!-- Scenario Box -->
       <div class="scenario-box">
         <div class="scenario-box-title">
@@ -202,7 +206,10 @@
           <option value="">-- แสดงทั้งหมดทุกผู้รับเหมา --</option>
         </select>
       </div>
+    </div>
 
+    <!-- ส่วนที่เลื่อนได้ (รายการต้นไม้) -->
+    <div class="sidebar-content">
       <div>
         <div class="tree-title">
           <span>🗂️ กลุ่มรถตัด (<span id="totalPlotsCount">0</span> แปลง)</span>
@@ -493,7 +500,7 @@
       const plotLi = document.getElementById(plotId); if (!plotLi) return;
       const subLi = plotLi.closest('.sub-node'), groupLi = plotLi.closest('.group-node');
       
-      // แสดงให้เห็นว่าอยู่ในกลุ่มไหน แต่ "ไม่ต้องเลื่อนหน้าจอ"
+      // แสดงให้เห็นว่าอยู่ในกลุ่มไหน แต่ "ไม่ต้องเลื่อนหน้าจอ (ไม่ใช้ scrollIntoView)"
       if (subLi) { subLi.querySelector('.plot-list').style.display = 'block'; subLi.querySelector('.caret-sub').classList.add('open'); }
       if (groupLi) { groupLi.querySelector('.sub-list').style.display = 'block'; groupLi.querySelector('.caret').classList.add('open'); }
       
