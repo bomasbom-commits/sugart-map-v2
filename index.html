@@ -61,10 +61,9 @@
     .tree-title { font-size: 13px; font-weight: bold; color: #37474f; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
     .tree-root { list-style: none; display: flex; flex-direction: column; gap: 6px; }
     
-    /* โครงสร้างโฟลเดอร์กลุ่มหลัก (เอา overflow: hidden ออกเพื่อให้ Sticky ทำงานได้) */
     .group-node { border: 1px solid #d0d7de; border-radius: 6px; background: #ffffff; }
     
-    /* ตั้งค่า Sticky ให้ "กลุ่มคิว" ค้างอยู่ด้านบนสุดเวลาเลื่อน */
+    /* ตรึงเฉพาะหัวข้อกลุ่มคิวหลักให้อยู่ด้านบนสุดเวลาเลื่อน */
     .group-header { 
       padding: 8px 10px; background: #f6f8fa; display: flex; align-items: center; justify-content: space-between; 
       cursor: pointer; user-select: none; font-weight: 600; font-size: 13px; 
@@ -76,12 +75,11 @@
     .sub-list { list-style: none; display: none; padding: 2px 0 2px 10px; background: #ffffff; border-top: 1px solid #e0e0e0; }
     .sub-node { margin: 2px 0; }
     
-    /* ตั้งค่า Sticky ให้ "กลุ่มรถตัด" ค้างอยู่ใต้ "กลุ่มคิว" เวลาเลื่อน */
+    /* กลุ่มรถตัดปล่อยให้เลื่อนตามปกติ ไม่ตรึง */
     .sub-header { 
       padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; 
       cursor: pointer; font-size: 12px; font-weight: 500; border-radius: 4px; background: #ffffff; 
-      position: sticky; top: 22px; z-index: 10; 
-      border-bottom: 1px solid #f0f0f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+      border-bottom: 1px solid #f0f0f0; 
     }
     .sub-header:hover { background: #f0f4f8; }
     
@@ -111,7 +109,6 @@
     .leaflet-popup-content td:first-child { background-color: #f2f7fc; font-weight: bold; width: 40%; color: #333; }
     .leaflet-popup-content td:nth-child(2) { color: #111; word-break: break-all; }
 
-    /* Buttons in Popup */
     .btn-measure-popup { margin-top: 8px; width: 100%; background: #E91E63; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .btn-measure-popup:hover { background: #C2185B; }
     .transfer-box { margin-top: 8px; padding: 8px; background: #F1F8E9; border: 1px solid #C5E1A5; border-radius: 6px; }
@@ -119,14 +116,12 @@
     .btn-transfer-popup { margin-top: 6px; width: 100%; background: #43A047; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
     .btn-reset-plot { margin-top: 4px; width: 100%; background: #FF9800; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
 
-    /* Top Controls */
     .top-controls-container { position: absolute; top: 12px; right: 60px; z-index: 1100; display: flex; gap: 8px; }
     .top-ctrl-btn { background: white; border: 1px solid #bbb; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 4px; color: #333; }
     .top-ctrl-btn:hover { background: #f5f5f5; }
     .top-ctrl-btn.active { background: #E91E63; color: white; border-color: #C2185B; }
     .top-ctrl-btn.active-reassign { background: #2E7D32; color: white; border-color: #1B5E20; }
 
-    /* Floating Panels */
     .top-floating-panel { display: none; position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1200; background: rgba(33, 33, 33, 0.95); color: white; padding: 8px 16px; border-radius: 24px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 14px rgba(0,0,0,0.35); align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
     .top-floating-panel button { border: none; padding: 4px 10px; border-radius: 12px; cursor: pointer; font-size: 11px; font-weight: 600; }
     .measure-tooltip { background: #e91e63; border: 1px solid #ffffff; color: white; font-weight: bold; font-size: 11px; padding: 2px 6px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
@@ -134,7 +129,6 @@
     .measuring-mode .leaflet-popup-pane { display: none !important; }
     .measuring-mode, .measuring-mode * { cursor: crosshair !important; }
 
-    /* Modal */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
     .modal-box { background: white; border-radius: 8px; width: 90%; max-width: 650px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
     .modal-header { padding: 12px 16px; background: #1565C0; color: white; display: flex; justify-content: space-between; align-items: center; }
@@ -159,13 +153,11 @@
   <button id="mobileMenuBtn" class="mobile-menu-btn">📂 เมนู / ค้นหา</button>
   <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-  <!-- แถบปุ่มลัดด้านบนขวา -->
   <div class="top-controls-container">
     <button id="btnQuickReassignMode" class="top-ctrl-btn">🔄 จัดกลุ่มด่วน</button>
     <button id="btnOpenChangeLog" class="top-ctrl-btn">📋 รายการย้าย (<span id="reassignCountBadge">0</span>)</button>
   </div>
 
-  <!-- แถบวัดระยะ -->
   <div id="measurePanel" class="top-floating-panel">
     <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b></span>
     <button id="btnUndoMeasure" style="background:#FF9800; color:white;">↩️ ลบจุดล่าสุด</button>
@@ -173,7 +165,6 @@
     <button id="btnExitMeasure" style="background:#555; color:white;">✕ ปิด</button>
   </div>
 
-  <!-- แถบจัดกลุ่มด่วน -->
   <div id="reassignPanel" class="top-floating-panel">
     <span>🎯 จัดเข้ากลุ่ม: <select id="batchTargetGroupSelect" style="font-size:11px; padding:3px; border-radius:4px;"></select></span>
     <span style="font-size:11px; opacity:0.85;">(คลิกแปลงเป้าหมาย)</span>
@@ -189,9 +180,8 @@
       <button id="btnCloseSidebar" class="btn-close-sidebar">✕</button>
     </div>
 
-    <!-- ส่วนที่ถูกตรึงไว้ให้อยู่คงเดิมเสมอ -->
+    <!-- ส่วนที่ตรึงไว้ด้านบน -->
     <div class="sidebar-controls">
-      <!-- Scenario Box -->
       <div class="scenario-box">
         <div class="scenario-box-title">
           <span>📁 โปรเจกต์ / แผนงาน</span>
@@ -216,7 +206,6 @@
         <div id="searchDropdown" class="search-dropdown"></div>
       </div>
 
-      <!-- Filter Box -->
       <div class="filter-box">
         <div class="filter-label">
           <span>🚜 กรองตามชื่อ-สกุล รับเหมา:</span>
@@ -228,7 +217,7 @@
       </div>
     </div>
 
-    <!-- ส่วนที่สามารถเลื่อน (Scroll) ไปหารหัสแปลงได้ -->
+    <!-- ส่วนรายการรหัสแปลง -->
     <div class="sidebar-content">
       <div>
         <div class="tree-title">
@@ -294,7 +283,6 @@
       const plotLi = document.getElementById(plot.uniqueId);
       if (!plotLi) return;
 
-      // ปรับลดตัวเลขที่กลุ่มเก่า
       const oldCb = document.querySelector(`.cb-sub[data-key="${oldSubKey}"]`);
       if (oldCb) {
         const oldSubNode = oldCb.closest('.sub-node');
@@ -309,13 +297,12 @@
         }
       }
 
-      // ดึงรหัสย้ายไปต่อท้ายกลุ่มใหม่ และเพิ่มตัวเลขกลุ่มใหม่
       const newCb = document.querySelector(`.cb-sub[data-key="${newSubKey}"]`);
       if (newCb) {
         const newSubNode = newCb.closest('.sub-node');
         if (newSubNode) {
             const newPlotList = newSubNode.querySelector('.plot-list');
-            if(newPlotList) newPlotList.appendChild(plotLi); // <--- คำสั่งย้ายแค่รายชื่อ
+            if(newPlotList) newPlotList.appendChild(plotLi);
             
             const newBadge = newSubNode.querySelector('.badge');
             if(newBadge) newBadge.innerText = parseInt(newBadge.innerText) + 1;
@@ -327,7 +314,6 @@
         }
       }
 
-      // อัปเดตข้อความป้ายสีส้มว่า ย้ายแล้ว
       plotLi.innerHTML = `<span>📍 ${plot.name}</span>${plot.isMoved ? '<span class="badge-moved">ย้ายแล้ว</span>' : ''}`;
     }
 
@@ -440,7 +426,7 @@
     });
 
     function switchScenario(scenarioId) {
-      currentScenarioId = scenarioId; updateScenarioSelectorUI(); applyCurrentScenario(); // สลับแผน จะโหลดโครงสร้างใหม่ทั้งหมด
+      currentScenarioId = scenarioId; updateScenarioSelectorUI(); applyCurrentScenario();
     }
 
     function applyCurrentScenario() {
@@ -480,14 +466,13 @@
       const plot = plotRegistry[plotId]; if (!plot) return;
 
       const oldSubKey = plot.subKey;
-      if (oldSubKey === newSubKey) return; // ถ้าเลือกกลุ่มเดิมให้ข้ามไปเลย
+      if (oldSubKey === newSubKey) return;
 
       if (newSubKey === plot.origSubKey) delete scenarios[currentScenarioId].overrides[plotId];
       else scenarios[currentScenarioId].overrides[plotId] = newSubKey;
 
       saveScenariosToStorage(); 
 
-      // อัปเดตข้อมูลแปลงในระบบ
       plot.isMoved = (newSubKey !== plot.origSubKey);
       plot.subKey = newSubKey;
       const [newMainG, newSubG] = newSubKey.split(':::');
@@ -495,20 +480,16 @@
       plot.subGroup = newSubG;
       plot.color = subColorMap[newSubKey];
 
-      // โยกย้ายแค่รายชื่อจริงๆ (หน้าจอไม่ขยับหนีแน่นอน)
       movePlotInDOM(plot, oldSubKey, newSubKey);
 
-      // ย้ายเลเยอร์ในแผนที่
       if (subGroupLayers[oldSubKey] && subGroupLayers[oldSubKey].hasLayer(plot.layer)) {
           subGroupLayers[oldSubKey].removeLayer(plot.layer);
       }
       if (!subGroupLayers[newSubKey]) subGroupLayers[newSubKey] = L.layerGroup().addTo(map);
       subGroupLayers[newSubKey].addLayer(plot.layer);
 
-      // อัปเดต Popup ของแปลงให้เป็นสีใหม่และกลุ่มใหม่
       plot.layer.bindPopup(createPopupContent(plot.name, plot.mainGroup, plot.subGroup, plot.color, plot.props, getPlotCenterLatLng(plot.layer), plot.uniqueId));
 
-      // แอนิเมชันแฟลชสีเหลืองตอนย้ายเสร็จบนแผนที่
       if (plot.layer.setStyle) { 
         plot.layer.setStyle({ color: '#FFD600', weight: 6, fillOpacity: 0.85 }); 
         setTimeout(() => plot.layer.setStyle({ color: plot.color, weight: plot.isMoved ? 3 : 2, fillColor: plot.color, fillOpacity: 0.35 }), 1200); 
@@ -595,17 +576,14 @@
       const plotLi = document.getElementById(plotId); if (!plotLi) return;
       const subLi = plotLi.closest('.sub-node'), groupLi = plotLi.closest('.group-node');
       
-      // กางโฟลเดอร์ออกมาให้เห็นรายการ
       if (subLi) { subLi.querySelector('.plot-list').style.display = 'block'; subLi.querySelector('.caret-sub').classList.add('open'); }
       if (groupLi) { groupLi.querySelector('.sub-list').style.display = 'block'; groupLi.querySelector('.caret').classList.add('open'); }
       
       setTimeout(() => {
-        // หากคลิกที่แผนที่ สั่งให้เลื่อนหน้าจอไปยังรหัสแปลงที่ถูกเลือก (ให้อยู่ตรงกลางเพื่อให้ไม่ถูกหัวข้อที่ค้างไว้บัง)
         if (shouldScroll) {
           plotLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         
-        // ไฮไลต์สีเหลืองให้แปลงที่เลือกเห็นชัดเจน
         document.querySelectorAll('.active-tree-plot').forEach(el => el.classList.remove('active-tree-plot'));
         plotLi.classList.add('active-tree-plot');
         setTimeout(() => plotLi.classList.remove('active-tree-plot'), 3500);
@@ -670,7 +648,7 @@
             l.on('click', (e) => {
               if (isMeasuring) { if(l.closePopup) l.closePopup(); addMeasurePoint(e.latlng); } 
               else if (isBatchReassigning) { if(l.closePopup) l.closePopup(); transferPlotInScenario(uniqueId, document.getElementById('batchTargetGroupSelect').value); }
-              else scrollTreeToPlot(uniqueId, true); // เลื่อนไปหาแปลงนั้นๆ เสมอเมื่อจิ้มจากแผนที่
+              else scrollTreeToPlot(uniqueId, true);
             });
           }
         });
@@ -706,6 +684,8 @@
       Object.keys(treeData).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(mainGroup => {
         const subGroups = treeData[mainGroup]; let gCount = 0; Object.keys(subGroups).forEach(s => gCount += subGroups[s].length); totalPlots += gCount;
         const gLi = document.createElement('li'); gLi.className = 'group-node';
+        
+        // ตรึงเฉพาะกลุ่มคิวหลัก (Group Header) ให้อยู่ด้านบนสุดเวลาเลื่อน
         gLi.innerHTML = `<div class="group-header"><div class="node-left"><span class="caret">▶</span><input type="checkbox" checked class="cb-group" data-group="${mainGroup}" /><span>📁 ${mainGroup}</span></div><span class="badge">${gCount}</span></div><ul class="sub-list"></ul>`;
         const subUl = gLi.querySelector('.sub-list'), gHeader = gLi.querySelector('.group-header');
 
@@ -714,6 +694,7 @@
           const cList = [...new Set(plots.map(p=>p.contractor).filter(c=>c&&c!=='ไม่ระบุผู้รับเหมา'))].join(', ');
           
           const sLi = document.createElement('li'); sLi.className = 'sub-node';
+          // กลุ่มรถตัดปล่อยให้เลื่อนตามปกติ ไม่ตรึง
           sLi.innerHTML = `
             <div class="sub-header">
               <div class="node-left" title="${subGroup} ${cList ? '- ' + cList : ''}">
@@ -778,7 +759,7 @@
       if(match.length===0){ searchDrop.innerHTML = `<div class="search-item" style="color:#888;">ไม่พบข้อมูล</div>`; searchDrop.style.display = 'block'; return; }
       match.slice(0,15).forEach(p => {
         const d = document.createElement('div'); d.className = 'search-item'; d.innerHTML = `<b>${p.name}</b> <span style="color:#666; font-size:11px;">(${p.mainGroup} > ${p.subGroup}) - [${p.contractor}]</span>`;
-        d.onclick = () => { searchDrop.style.display = 'none'; searchInp.value = p.name; focusPlot(p); scrollTreeToPlot(p.uniqueId, false); /* ค้นหาผ่านกล่องไม่ต้องเลื่อนจอ */ if(window.innerWidth<=768) closeSidebar(); }; searchDrop.appendChild(d);
+        d.onclick = () => { searchDrop.style.display = 'none'; searchInp.value = p.name; focusPlot(p); scrollTreeToPlot(p.uniqueId, false); if(window.innerWidth<=768) closeSidebar(); }; searchDrop.appendChild(d);
       }); searchDrop.style.display = 'block';
     }; document.addEventListener('click', e => { if(!e.target.closest('.search-box')) searchDrop.style.display='none'; });
 
