@@ -63,7 +63,7 @@
     
     .group-node { border: 1px solid #d0d7de; border-radius: 6px; background: #ffffff; }
     
-    /* ตรึงหัวข้อกลุ่มคิวหลัก ให้อยู่ด้านบนสุด */
+    /* ตรึงหัวข้อกลุ่มคิวหลัก ให้อยู่ด้านบนสุดเวลาเลื่อน */
     .group-header { 
       padding: 8px 10px; background: #f6f8fa; display: flex; align-items: center; justify-content: space-between; 
       cursor: pointer; user-select: none; font-weight: 600; font-size: 13px; 
@@ -75,6 +75,7 @@
     .sub-list { list-style: none; display: none; padding: 2px 0 2px 10px; background: #ffffff; border-top: 1px solid #e0e0e0; }
     .sub-node { margin: 2px 0; }
     
+    /* กลุ่มรถตัด (กลุ่มย่อย) แสดงผลตามปกติ */
     .sub-header { 
       padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; 
       cursor: pointer; font-size: 12px; font-weight: 500; border-radius: 4px; background: #ffffff; 
@@ -315,7 +316,7 @@
       plotLi.innerHTML = `<span>📍 ${plot.name}</span>${plot.isMoved ? '<span class="badge-moved">ย้ายแล้ว</span>' : ''}`;
     }
 
-    /* Scenario Management */
+    /* Scenario Logic */
     const SCENARIO_STORAGE_KEY = 'sugar_cane_scenarios_combined';
     let currentScenarioId = 'original';
     let scenarios = { 'original': { name: '📌 แผนตั้งต้น (Original KML)', overrides: {} } };
@@ -691,6 +692,8 @@
           const cList = [...new Set(plots.map(p=>p.contractor).filter(c=>c&&c!=='ไม่ระบุผู้รับเหมา'))].join(', ');
           
           const sLi = document.createElement('li'); sLi.className = 'sub-node';
+          
+          // ** นำ .sub-header กลับคืนมาตามปกติแล้ว **
           sLi.innerHTML = `
             <div class="sub-header">
               <div class="node-left" title="${subGroup} ${cList ? '- ' + cList : ''}">
@@ -759,7 +762,7 @@
       }); searchDrop.style.display = 'block';
     }; document.addEventListener('click', e => { if(!e.target.closest('.search-box')) searchDrop.style.display='none'; });
 
-    /* Modals for Logs - เพิ่มฟังก์ชันคลิกที่รหัสแปลงในตารางแล้วพุ่งไปหาข้อมูลบนแผนที่ */
+    /* Modals for Logs */
     const logModal = document.getElementById('logModal');
     document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
       document.getElementById('modalScenarioName').innerText = scenarios[currentScenarioId].name;
@@ -770,8 +773,6 @@
         movedIds.forEach(id => {
           const p = plotRegistry[id]; if(!p)return;
           const tr = document.createElement('tr');
-          
-          // ** แก้ไข: ทำให้รหัสแปลงในตารางคลิกได้เพื่อซูมไปหาแปลงบนแผนที่ **
           tr.innerHTML = `
             <td><a href="#" onclick="logModal.style.display='none'; focusPlot(plotRegistry['${id}']); return false;" style="color:#1565C0; text-decoration:underline; font-weight:bold;">${p.name}</a></td>
             <td style="color:#c62828;">${p.origSubKey.replace(':::', ' > ')}</td>
