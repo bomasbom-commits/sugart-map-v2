@@ -401,7 +401,7 @@
       buildHierarchyUI(); populateContractorDropdown();
     }
 
-    function transferPlotInScenario(plotId, newSubKey) {
+    window.transferPlotInScenario = function(plotId, newSubKey) {
       if (currentScenarioId === 'original') {
         if (!confirm('คุณอยู่ใน "แผนตั้งต้น" ต้องการสร้างโปรเจกต์ใหม่เพื่อบันทึกการย้ายหรือไม่?')) return;
         const newId = `sc_${Date.now()}`;
@@ -462,16 +462,20 @@
       if (isMoved) c += ` <span class="badge-moved">ย้ายกลุ่มแล้ว</span>`;
       c += `<br/><span style="font-size: 12px; color: #555;"><b>กลุ่ม:</b> ${groupName} | <b>กลุ่มย่อย:</b> ${subGroup}</span>`;
       
-      c += `<div class="transfer-box"><label style="font-weight:bold; font-size:11px; color:#33691E;">🔄 ย้ายไปกลุ่มอื่น:</label><select id="popupSel_${plotId}">`;
+      // ป้องกัน Click Propagation ให้ Dropdown
+      c += `<div class="transfer-box"><label style="font-weight:bold; font-size:11px; color:#33691E;">🔄 ย้ายไปกลุ่มอื่น:</label>
+            <select id="popupSel_${plotId}" onmousedown="event.stopPropagation();" ontouchstart="event.stopPropagation();">`;
       Array.from(allKnownSubKeys).sort().forEach(k => { const [m,s] = k.split(':::'); c += `<option value="${k}" ${k===plot.subKey ? 'selected':''}>${m} > ${s}</option>`; });
-      c += `</select><button class="btn-transfer-popup" onclick="transferPlotInScenario('${plotId}', document.getElementById('popupSel_${plotId}').value); map.closePopup();">บันทึกการย้าย</button>`;
-      if(isMoved) c += `<button class="btn-reset-plot" onclick="resetSinglePlotToOriginal('${plotId}')">↩️ คืนกลุ่มเดิม (${plot.origSubKey.replace(':::', ' > ')})</button>`;
+      
+      // หน่วงเวลาปิด Popup ก่อนทำการย้ายเพื่อป้องกัน Error
+      c += `</select><button class="btn-transfer-popup" onclick="event.stopPropagation(); map.closePopup(); setTimeout(() => transferPlotInScenario('${plotId}', document.getElementById('popupSel_${plotId}').value), 100);">บันทึกการย้าย</button>`;
+      
+      if(isMoved) c += `<button class="btn-reset-plot" onclick="event.stopPropagation(); resetSinglePlotToOriginal('${plotId}')">↩️ คืนกลุ่มเดิม (${plot.origSubKey.replace(':::', ' > ')})</button>`;
       c += `</div>`;
 
-      if (centerLatLng) c += `<button class="btn-measure-popup" onclick="startMeasureFromPlot(${centerLatLng.lat}, ${centerLatLng.lng})">📏 เริ่มวัดระยะจากแปลงนี้</button>`;
+      if (centerLatLng) c += `<button class="btn-measure-popup" onclick="event.stopPropagation(); startMeasureFromPlot(${centerLatLng.lat}, ${centerLatLng.lng})">📏 เริ่มวัดระยะจากแปลงนี้</button>`;
       c += `<hr style="margin:8px 0;border:none;border-top:1px solid #e0e0e0;"/>`;
       
-      // ป้องกัน field ขยะจาก KML ออกมาโชว์ในตาราง
       const ignored = [
         'name', 'description', 'main_grp', 'sub_grp', 'unique_id', 'contractor',
         'styleUrl', 'styleHash', 'stroke', 'stroke-opacity', 'stroke-width', 
