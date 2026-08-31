@@ -27,7 +27,9 @@
     .sidebar-header p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
     .btn-close-sidebar { display: none; background: none; border: none; color: white; font-size: 20px; cursor: pointer; line-height: 1; }
     
+    /* ส่วนควบคุมที่ตรึงไว้ด้านบน */
     .sidebar-controls { padding: 12px 12px 0 12px; display: flex; flex-direction: column; gap: 10px; background: #ffffff; z-index: 10; border-bottom: 1px solid #e0e0e0; padding-bottom: 12px; }
+    /* ส่วนรายการที่สามารถเลื่อนได้ */
     .sidebar-content { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
 
     /* Scenario Box */
@@ -168,7 +170,7 @@
       <button id="btnCloseSidebar" class="btn-close-sidebar">✕</button>
     </div>
 
-    <!-- ส่วนที่ถูกตรึงไว้ (ไม่ขยับ) -->
+    <!-- ส่วนที่ถูกตรึงไว้ให้อยู่คงเดิมเสมอ -->
     <div class="sidebar-controls">
       <!-- Scenario Box -->
       <div class="scenario-box">
@@ -207,7 +209,7 @@
       </div>
     </div>
 
-    <!-- ส่วนที่เลื่อนได้ (รายการต้นไม้) -->
+    <!-- ส่วนที่สามารถเลื่อน (Scroll) ไปหารหัสแปลงได้ -->
     <div class="sidebar-content">
       <div>
         <div class="tree-title">
@@ -499,11 +501,15 @@
       const plotLi = document.getElementById(plotId); if (!plotLi) return;
       const subLi = plotLi.closest('.sub-node'), groupLi = plotLi.closest('.group-node');
       
-      // กางโฟลเดอร์ออกมาให้เห็นรายการ (แต่ลบคำสั่งเลื่อนหน้าจอออกไปทั้งหมด)
+      // กางโฟลเดอร์ออกมาให้เห็นรายการ
       if (subLi) { subLi.querySelector('.plot-list').style.display = 'block'; subLi.querySelector('.caret-sub').classList.add('open'); }
       if (groupLi) { groupLi.querySelector('.sub-list').style.display = 'block'; groupLi.querySelector('.caret').classList.add('open'); }
       
       setTimeout(() => {
+        // เพิ่มคำสั่งให้เลื่อนหน้าจอไปยังรหัสแปลงที่ถูกเลือก
+        plotLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // ไฮไลต์สีเหลืองให้แปลงที่เลือกเห็นชัดเจน
         document.querySelectorAll('.active-tree-plot').forEach(el => el.classList.remove('active-tree-plot'));
         plotLi.classList.add('active-tree-plot');
         setTimeout(() => plotLi.classList.remove('active-tree-plot'), 3500);
@@ -568,7 +574,7 @@
             l.on('click', (e) => {
               if (isMeasuring) { if(l.closePopup) l.closePopup(); addMeasurePoint(e.latlng); } 
               else if (isBatchReassigning) { if(l.closePopup) l.closePopup(); transferPlotInScenario(uniqueId, document.getElementById('batchTargetGroupSelect').value); }
-              else scrollTreeToPlot(uniqueId); // ปรับให้ไม่ต้องส่งพารามิเตอร์แล้ว เพราะถูกแก้ให้หยุดนิ่งเสมอ
+              else scrollTreeToPlot(uniqueId); // ปรับให้เมื่อคลิกบนแผนที่ก็จะไปเรียกคำสั่งเลื่อนหน้าจออัตโนมัติ
             });
           }
         });
