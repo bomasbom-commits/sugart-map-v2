@@ -75,12 +75,10 @@
     .sub-list { list-style: none; display: none; padding: 2px 0 2px 10px; background: #ffffff; border-top: 1px solid #e0e0e0; }
     .sub-node { margin: 2px 0; }
     
-    /* ตรึงหัวข้อกลุ่มรถตัด ให้อยู่ใต้กลุ่มคิวหลักลงมานิดหน่อยเมื่อเลื่อนจอ */
     .sub-header { 
       padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; 
       cursor: pointer; font-size: 12px; font-weight: 500; border-radius: 4px; background: #ffffff; 
-      position: sticky; top: 26px; z-index: 15; 
-      border-bottom: 1px solid #f0f0f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+      border-bottom: 1px solid #f0f0f0; 
     }
     .sub-header:hover { background: #f0f4f8; }
     
@@ -181,7 +179,7 @@
       <button id="btnCloseSidebar" class="btn-close-sidebar">✕</button>
     </div>
 
-    <!-- ส่วนที่ตรึงไว้ด้านบน -->
+    <!-- ส่วนที่ถูกตรึงไว้ด้านบน -->
     <div class="sidebar-controls">
       <div class="scenario-box">
         <div class="scenario-box-title">
@@ -685,7 +683,6 @@
         const subGroups = treeData[mainGroup]; let gCount = 0; Object.keys(subGroups).forEach(s => gCount += subGroups[s].length); totalPlots += gCount;
         const gLi = document.createElement('li'); gLi.className = 'group-node';
         
-        // กลุ่มคิวหลัก (ตรึงไว้ด้านบน)
         gLi.innerHTML = `<div class="group-header"><div class="node-left"><span class="caret">▶</span><input type="checkbox" checked class="cb-group" data-group="${mainGroup}" /><span>📁 ${mainGroup}</span></div><span class="badge">${gCount}</span></div><ul class="sub-list"></ul>`;
         const subUl = gLi.querySelector('.sub-list'), gHeader = gLi.querySelector('.group-header');
 
@@ -694,10 +691,8 @@
           const cList = [...new Set(plots.map(p=>p.contractor).filter(c=>c&&c!=='ไม่ระบุผู้รับเหมา'))].join(', ');
           
           const sLi = document.createElement('li'); sLi.className = 'sub-node';
-          
-          // ** เพิ่ม .sub-header เข้าไปใน .group-node เดียวกัน และใช้ position: sticky พร้อมคำนวณ top ให้ต่อจากกลุ่มคิวหลักพอดี **
           sLi.innerHTML = `
-            <div class="sub-header" style="position: sticky; top: 25px; z-index: 10; background: #ffffff;">
+            <div class="sub-header">
               <div class="node-left" title="${subGroup} ${cList ? '- ' + cList : ''}">
                 <span class="caret caret-sub">▶</span><input type="checkbox" checked class="cb-sub" data-key="${subKey}" />
                 <span class="color-dot" style="background:${color};" title="เปลี่ยนสี"></span><input type="color" class="color-picker-input" value="${color}">
@@ -764,7 +759,7 @@
       }); searchDrop.style.display = 'block';
     }; document.addEventListener('click', e => { if(!e.target.closest('.search-box')) searchDrop.style.display='none'; });
 
-    /* Modals for Logs */
+    /* Modals for Logs - เพิ่มฟังก์ชันคลิกที่รหัสแปลงในตารางแล้วพุ่งไปหาข้อมูลบนแผนที่ */
     const logModal = document.getElementById('logModal');
     document.getElementById('btnOpenChangeLog').addEventListener('click', () => {
       document.getElementById('modalScenarioName').innerText = scenarios[currentScenarioId].name;
@@ -774,7 +769,16 @@
         document.getElementById('emptyLogText').style.display = 'none'; document.getElementById('logTable').style.display = 'table'; tBody.innerHTML = '';
         movedIds.forEach(id => {
           const p = plotRegistry[id]; if(!p)return;
-          const tr = document.createElement('tr'); tr.innerHTML = `<td><b>${p.name}</b></td><td style="color:#c62828;">${p.origSubKey.replace(':::', ' > ')}</td><td style="color:#2e7d32; font-weight:bold;">${p.subKey.replace(':::', ' > ')}</td><td><button onclick="resetSinglePlotToOriginal('${id}'); this.closest('tr').remove();" style="background:#FF9800;color:white;border:none;padding:2px 6px;border-radius:4px;cursor:pointer;">คืนค่า</button></td>`; tBody.appendChild(tr);
+          const tr = document.createElement('tr');
+          
+          // ** แก้ไข: ทำให้รหัสแปลงในตารางคลิกได้เพื่อซูมไปหาแปลงบนแผนที่ **
+          tr.innerHTML = `
+            <td><a href="#" onclick="logModal.style.display='none'; focusPlot(plotRegistry['${id}']); return false;" style="color:#1565C0; text-decoration:underline; font-weight:bold;">${p.name}</a></td>
+            <td style="color:#c62828;">${p.origSubKey.replace(':::', ' > ')}</td>
+            <td style="color:#2e7d32; font-weight:bold;">${p.subKey.replace(':::', ' > ')}</td>
+            <td><button onclick="resetSinglePlotToOriginal('${id}'); this.closest('tr').remove();" style="background:#FF9800;color:white;border:none;padding:2px 6px;border-radius:4px;cursor:pointer;">คืนค่า</button></td>
+          `;
+          tBody.appendChild(tr);
         });
       } logModal.style.display = 'flex';
     });
