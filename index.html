@@ -270,6 +270,72 @@
     const allKnownSubKeys = new Set();
     const plotRegistry = {}; 
 
+    /* ระบบบันทึกสถานะการเลื่อนของเมนู (ป้องกันการเด้งกลับตอนย้ายแปลง) */
+    let treeState = { scrollTop: 0, openGroups: new Set(), openSubs: new Set(), uncheckedGroups: new Set(), uncheckedSubs: new Set() };
+
+    function captureTreeState() {
+      const container = document.querySelector('.sidebar-content');
+      if (!container) return;
+      treeState.scrollTop = container.scrollTop;
+      treeState.openGroups.clear(); treeState.openSubs.clear();
+      treeState.uncheckedGroups.clear(); treeState.uncheckedSubs.clear();
+
+      document.querySelectorAll('.group-node').forEach(node => {
+        const cb = node.querySelector('.cb-group');
+        if(!cb) return;
+        const grp = cb.getAttribute('data-group');
+        const subList = node.querySelector('.sub-list');
+        if (subList && subList.style.display === 'block') treeState.openGroups.add(grp);
+        if (!cb.checked) treeState.uncheckedGroups.add(grp);
+      });
+
+      document.querySelectorAll('.sub-node').forEach(node => {
+        const cb = node.querySelector('.cb-sub');
+        if(!cb) return;
+        const key = cb.getAttribute('data-key');
+        const plotList = node.querySelector('.plot-list');
+        if (plotList && plotList.style.display === 'block') treeState.openSubs.add(key);
+        if (!cb.checked) treeState.uncheckedSubs.add(key);
+      });
+    }
+
+    function restoreTreeState() {
+      document.querySelectorAll('.group-node').forEach(node => {
+        const cb = node.querySelector('.cb-group');
+        if(!cb) return;
+        const grp = cb.getAttribute('data-group');
+        if (treeState.openGroups.has(grp)) {
+          const subList = node.querySelector('.sub-list');
+          if (subList) subList.style.display = 'block';
+          const caret = node.querySelector('.caret');
+          if (caret) caret.classList.add('open');
+        }
+        if (treeState.uncheckedGroups.has(grp)) cb.checked = false;
+      });
+
+      document.querySelectorAll('.sub-node').forEach(node => {
+        const cb = node.querySelector('.cb-sub');
+        if(!cb) return;
+        const key = cb.getAttribute('data-key');
+        if (treeState.openSubs.has(key)) {
+          const plotList = node.querySelector('.plot-list');
+          if (plotList) plotList.style.display = 'block';
+          const caret = node.querySelector('.caret-sub');
+          if (caret) caret.classList.add('open');
+        }
+        if (treeState.uncheckedSubs.has(key)) {
+          cb.checked = false;
+          if (subGroupLayers[key] && map.hasLayer(subGroupLayers[key])) map.removeLayer(subGroupLayers[key]);
+        }
+      });
+
+      syncSelectAllBtn();
+      const container = document.querySelector('.sidebar-content');
+      if (container) {
+        setTimeout(() => container.scrollTop = treeState.scrollTop, 10);
+      }
+    }
+
     /* Scenario Management */
     const SCENARIO_STORAGE_KEY = 'sugar_cane_scenarios_combined';
     let currentScenarioId = 'original';
@@ -383,6 +449,9 @@
     }
 
     function applyCurrentScenario() {
+      // 1. บันทึกสถานะหน้าจอและโฟลเดอร์ก่อนล้างข้อมูล
+      captureTreeState();
+
       const overrides = scenarios[currentScenarioId]?.overrides || {};
       Object.keys(subGroupLayers).forEach(k => subGroupLayers[k].clearLayers());
       treeData = {}; searchIndex = []; Object.keys(subGroupPlotsMap).forEach(k => subGroupPlotsMap[k] = []);
@@ -406,7 +475,12 @@
 
         plot.layer.bindPopup(createPopupContent(plot.name, mainG, subG, color, plot.props, getPlotCenterLatLng(plot.layer), plot.uniqueId));
       });
-      buildHierarchyUI(); populateContractorDropdown();
+      
+      buildHierarchyUI(); 
+      populateContractorDropdown();
+
+      // 2. คืนค่าสถานะหน้าจอให้กลับมานิ่งอยู่ที่เดิม
+      restoreTreeState();
     }
 
     window.transferPlotInScenario = function(plotId, newSubKey) {
@@ -420,7 +494,8 @@
       if (newSubKey === plot.origSubKey) delete scenarios[currentScenarioId].overrides[plotId];
       else scenarios[currentScenarioId].overrides[plotId] = newSubKey;
 
-      saveScenariosToStorage(); applyCurrentScenario();
+      saveScenariosToStorage(); 
+      applyCurrentScenario();
       if (plot.layer.setStyle) { plot.layer.setStyle({ color: '#FFD600', weight: 6, fillOpacity: 0.85 }); setTimeout(() => plot.layer.setStyle({ color: plot.color, weight: plot.isMoved ? 3 : 2, fillOpacity: 0.35 }), 1200); }
     }
     window.resetSinglePlotToOriginal = function(plotId) { transferPlotInScenario(plotId, plotRegistry[plotId].origSubKey); map.closePopup(); };
@@ -497,7 +572,7 @@
       c += rows ? `<table>${rows}</table>` : `<p style="color:#777;font-size:11px;">ไม่มีข้อมูลเพิ่มเติม</p>`; return c + `</div>`;
     }
 
-    function scrollTreeToPlot(plotId) {
+    function scrollTreeToPlot(plotId, shouldScroll = true) {
       const plotLi = document.getElementById(plotId); if (!plotLi) return;
       const subLi = plotLi.closest('.sub-node'), groupLi = plotLi.closest('.group-node');
       
@@ -506,9 +581,12 @@
       if (groupLi) { groupLi.querySelector('.sub-list').style.display = 'block'; groupLi.querySelector('.caret').classList.add('open'); }
       
       setTimeout(() => {
-        // ให้เลื่อนไปหาแปลงที่เลือกได้เลย (เมนูด้านบนถูกตรึงไว้แล้ว จึงไม่หนีหาย)
-        plotLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // หากคลิกที่แผนที่ หรือ ค้นหา ให้เลื่อน (Scroll) ไปหาแปลงนั้นๆ
+        if (shouldScroll) {
+          plotLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         
+        // ไฮไลต์แปลงเป็นสีเหลือง
         document.querySelectorAll('.active-tree-plot').forEach(el => el.classList.remove('active-tree-plot'));
         plotLi.classList.add('active-tree-plot');
         setTimeout(() => plotLi.classList.remove('active-tree-plot'), 3500);
@@ -573,7 +651,7 @@
             l.on('click', (e) => {
               if (isMeasuring) { if(l.closePopup) l.closePopup(); addMeasurePoint(e.latlng); } 
               else if (isBatchReassigning) { if(l.closePopup) l.closePopup(); transferPlotInScenario(uniqueId, document.getElementById('batchTargetGroupSelect').value); }
-              else scrollTreeToPlot(uniqueId); // เมื่อคลิกให้ทำการเลื่อนหารายชื่อในหน้าต่างเมนูเสมอ
+              else scrollTreeToPlot(uniqueId, true); // เมื่อคลิกบนแผนที่ สั่งให้ระบบเลื่อน (Scroll) ไปหารหัสแปลงทันที
             });
           }
         });
@@ -681,7 +759,7 @@
       if(match.length===0){ searchDrop.innerHTML = `<div class="search-item" style="color:#888;">ไม่พบข้อมูล</div>`; searchDrop.style.display = 'block'; return; }
       match.slice(0,15).forEach(p => {
         const d = document.createElement('div'); d.className = 'search-item'; d.innerHTML = `<b>${p.name}</b> <span style="color:#666; font-size:11px;">(${p.mainGroup} > ${p.subGroup}) - [${p.contractor}]</span>`;
-        d.onclick = () => { searchDrop.style.display = 'none'; searchInp.value = p.name; focusPlot(p); scrollTreeToPlot(p.uniqueId); if(window.innerWidth<=768) closeSidebar(); }; searchDrop.appendChild(d);
+        d.onclick = () => { searchDrop.style.display = 'none'; searchInp.value = p.name; focusPlot(p); scrollTreeToPlot(p.uniqueId, true); if(window.innerWidth<=768) closeSidebar(); }; searchDrop.appendChild(d);
       }); searchDrop.style.display = 'block';
     }; document.addEventListener('click', e => { if(!e.target.closest('.search-box')) searchDrop.style.display='none'; });
 
