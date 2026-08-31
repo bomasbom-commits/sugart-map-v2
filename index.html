@@ -26,7 +26,7 @@
     .sidebar-header h2 { font-size: 16px; font-weight: 600; }
     .sidebar-header p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
     .btn-close-sidebar { display: none; background: none; border: none; color: white; font-size: 20px; cursor: pointer; line-height: 1; }
-    .sidebar-content { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+    .sidebar-content { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
     /* Scenario Box */
     .scenario-box { background: #FFF8E1; border: 1px solid #FFE082; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
@@ -462,12 +462,10 @@
       if (isMoved) c += ` <span class="badge-moved">ย้ายกลุ่มแล้ว</span>`;
       c += `<br/><span style="font-size: 12px; color: #555;"><b>กลุ่ม:</b> ${groupName} | <b>กลุ่มย่อย:</b> ${subGroup}</span>`;
       
-      // ป้องกัน Click Propagation ให้ Dropdown
       c += `<div class="transfer-box"><label style="font-weight:bold; font-size:11px; color:#33691E;">🔄 ย้ายไปกลุ่มอื่น:</label>
             <select id="popupSel_${plotId}" onmousedown="event.stopPropagation();" ontouchstart="event.stopPropagation();">`;
       Array.from(allKnownSubKeys).sort().forEach(k => { const [m,s] = k.split(':::'); c += `<option value="${k}" ${k===plot.subKey ? 'selected':''}>${m} > ${s}</option>`; });
       
-      // หน่วงเวลาปิด Popup ก่อนทำการย้ายเพื่อป้องกัน Error
       c += `</select><button class="btn-transfer-popup" onclick="event.stopPropagation(); map.closePopup(); setTimeout(() => transferPlotInScenario('${plotId}', document.getElementById('popupSel_${plotId}').value), 100);">บันทึกการย้าย</button>`;
       
       if(isMoved) c += `<button class="btn-reset-plot" onclick="event.stopPropagation(); resetSinglePlotToOriginal('${plotId}')">↩️ คืนกลุ่มเดิม (${plot.origSubKey.replace(':::', ' > ')})</button>`;
@@ -494,10 +492,12 @@
     function scrollTreeToPlot(plotId) {
       const plotLi = document.getElementById(plotId); if (!plotLi) return;
       const subLi = plotLi.closest('.sub-node'), groupLi = plotLi.closest('.group-node');
+      
+      // แสดงให้เห็นว่าอยู่ในกลุ่มไหน แต่ "ไม่ต้องเลื่อนหน้าจอ"
       if (subLi) { subLi.querySelector('.plot-list').style.display = 'block'; subLi.querySelector('.caret-sub').classList.add('open'); }
       if (groupLi) { groupLi.querySelector('.sub-list').style.display = 'block'; groupLi.querySelector('.caret').classList.add('open'); }
+      
       setTimeout(() => {
-        plotLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
         document.querySelectorAll('.active-tree-plot').forEach(el => el.classList.remove('active-tree-plot'));
         plotLi.classList.add('active-tree-plot');
         setTimeout(() => plotLi.classList.remove('active-tree-plot'), 3500);
