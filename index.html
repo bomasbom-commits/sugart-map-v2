@@ -27,7 +27,6 @@
     .sidebar-header p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
     .btn-close-sidebar { display: none; background: none; border: none; color: white; font-size: 20px; cursor: pointer; line-height: 1; }
     
-    /* เพิ่มคลาสใหม่สำหรับส่วนที่ถูกตรึง */
     .sidebar-controls { padding: 12px 12px 0 12px; display: flex; flex-direction: column; gap: 10px; background: #ffffff; z-index: 10; border-bottom: 1px solid #e0e0e0; padding-bottom: 12px; }
     .sidebar-content { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
 
@@ -496,15 +495,21 @@
       c += rows ? `<table>${rows}</table>` : `<p style="color:#777;font-size:11px;">ไม่มีข้อมูลเพิ่มเติม</p>`; return c + `</div>`;
     }
 
-    function scrollTreeToPlot(plotId) {
+    // ฟังก์ชันนี้รับพารามิเตอร์ shouldScroll เพื่อบอกว่าจะให้เลื่อนจอหรือไม่
+    function scrollTreeToPlot(plotId, shouldScroll = true) {
       const plotLi = document.getElementById(plotId); if (!plotLi) return;
       const subLi = plotLi.closest('.sub-node'), groupLi = plotLi.closest('.group-node');
       
-      // แสดงให้เห็นว่าอยู่ในกลุ่มไหน แต่ "ไม่ต้องเลื่อนหน้าจอ (ไม่ใช้ scrollIntoView)"
+      // กางโฟลเดอร์ออกมาให้เห็นรายการ
       if (subLi) { subLi.querySelector('.plot-list').style.display = 'block'; subLi.querySelector('.caret-sub').classList.add('open'); }
       if (groupLi) { groupLi.querySelector('.sub-list').style.display = 'block'; groupLi.querySelector('.caret').classList.add('open'); }
       
       setTimeout(() => {
+        // หากคลิกที่แผนที่ ให้เลื่อน Sidebar ไปหาแปลง
+        if (shouldScroll) {
+          plotLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        // ไฮไลต์สีเหลืองให้แปลงที่เลือก
         document.querySelectorAll('.active-tree-plot').forEach(el => el.classList.remove('active-tree-plot'));
         plotLi.classList.add('active-tree-plot');
         setTimeout(() => plotLi.classList.remove('active-tree-plot'), 3500);
@@ -569,7 +574,7 @@
             l.on('click', (e) => {
               if (isMeasuring) { if(l.closePopup) l.closePopup(); addMeasurePoint(e.latlng); } 
               else if (isBatchReassigning) { if(l.closePopup) l.closePopup(); transferPlotInScenario(uniqueId, document.getElementById('batchTargetGroupSelect').value); }
-              else scrollTreeToPlot(uniqueId);
+              else scrollTreeToPlot(uniqueId, true); // <--- สั่งให้เลื่อนอัตโนมัติเมื่อคลิกบนแผนที่
             });
           }
         });
@@ -677,7 +682,7 @@
       if(match.length===0){ searchDrop.innerHTML = `<div class="search-item" style="color:#888;">ไม่พบข้อมูล</div>`; searchDrop.style.display = 'block'; return; }
       match.slice(0,15).forEach(p => {
         const d = document.createElement('div'); d.className = 'search-item'; d.innerHTML = `<b>${p.name}</b> <span style="color:#666; font-size:11px;">(${p.mainGroup} > ${p.subGroup}) - [${p.contractor}]</span>`;
-        d.onclick = () => { searchDrop.style.display = 'none'; searchInp.value = p.name; focusPlot(p); scrollTreeToPlot(p.uniqueId); if(window.innerWidth<=768) closeSidebar(); }; searchDrop.appendChild(d);
+        d.onclick = () => { searchDrop.style.display = 'none'; searchInp.value = p.name; focusPlot(p); scrollTreeToPlot(p.uniqueId, false); /* <--- สั่งว่าไม่ต้องเลื่อนหน้าจอเวลาค้นหา */ if(window.innerWidth<=768) closeSidebar(); }; searchDrop.appendChild(d);
       }); searchDrop.style.display = 'block';
     }; document.addEventListener('click', e => { if(!e.target.closest('.search-box')) searchDrop.style.display='none'; });
 
