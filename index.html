@@ -506,10 +506,9 @@
       if (groupLi) { groupLi.querySelector('.sub-list').style.display = 'block'; groupLi.querySelector('.caret').classList.add('open'); }
       
       setTimeout(() => {
-        // เพิ่มคำสั่งให้เลื่อนหน้าจอไปยังรหัสแปลงที่ถูกเลือก
+        // ให้เลื่อนไปหาแปลงที่เลือกได้เลย (เมนูด้านบนถูกตรึงไว้แล้ว จึงไม่หนีหาย)
         plotLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // ไฮไลต์สีเหลืองให้แปลงที่เลือกเห็นชัดเจน
         document.querySelectorAll('.active-tree-plot').forEach(el => el.classList.remove('active-tree-plot'));
         plotLi.classList.add('active-tree-plot');
         setTimeout(() => plotLi.classList.remove('active-tree-plot'), 3500);
@@ -574,7 +573,7 @@
             l.on('click', (e) => {
               if (isMeasuring) { if(l.closePopup) l.closePopup(); addMeasurePoint(e.latlng); } 
               else if (isBatchReassigning) { if(l.closePopup) l.closePopup(); transferPlotInScenario(uniqueId, document.getElementById('batchTargetGroupSelect').value); }
-              else scrollTreeToPlot(uniqueId); // ปรับให้เมื่อคลิกบนแผนที่ก็จะไปเรียกคำสั่งเลื่อนหน้าจออัตโนมัติ
+              else scrollTreeToPlot(uniqueId); // เมื่อคลิกให้ทำการเลื่อนหารายชื่อในหน้าต่างเมนูเสมอ
             });
           }
         });
