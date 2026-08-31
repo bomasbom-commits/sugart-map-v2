@@ -136,26 +136,46 @@
   <button id="mobileMenuBtn" class="mobile-menu-btn">📂 เมนู / ค้นหา</button>
   <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-  <!-- แถบปุ่มลัดด้านบนขวา -->
-  <div class="top-controls-container">
-    <button id="btnQuickReassignMode" class="top-ctrl-btn">🔄 จัดกลุ่มด่วน</button>
-    <button id="btnOpenChangeLog" class="top-ctrl-btn">📋 รายการย้าย (<span id="reassignCountBadge">0</span>)</button>
+  <div id="sidebar">
+    <!-- ... (โค้ดส่วน Sidebar ไม่ต้องเปลี่ยน ปล่อยไว้เหมือนเดิม) ... -->
   </div>
 
-  <!-- แถบวัดระยะ -->
-  <div id="measurePanel" class="top-floating-panel">
-    <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b></span>
-    <button id="btnUndoMeasure" style="background:#FF9800; color:white;">↩️ ลบจุดล่าสุด</button>
-    <button id="btnClearMeasure" style="background:#E91E63; color:white;">🗑️ ล้างทั้งหมด</button>
-    <button id="btnExitMeasure" style="background:#555; color:white;">✕ ปิด</button>
+  <!-- 🟢 ส่วนที่แก้ไข: สร้าง Wrapper ครอบแผนที่และปุ่มลอยทั้งหมด 🟢 -->
+  <div id="mapWrapper" style="flex: 1; position: relative; height: 100%; width: 100%;">
+    
+    <!-- แถบปุ่มลัดด้านบนขวา -->
+    <div class="top-controls-container">
+      <button id="btnQuickReassignMode" class="top-ctrl-btn">🔄 จัดกลุ่มด่วน</button>
+      <button id="btnOpenChangeLog" class="top-ctrl-btn">📋 รายการย้าย (<span id="reassignCountBadge">0</span>)</button>
+    </div>
+
+    <!-- แถบวัดระยะ -->
+    <div id="measurePanel" class="top-floating-panel">
+      <span>📏 ระยะรวม: <b id="measureTotalDist" style="color: #4fc3f7;">0 ม.</b></span>
+      <button id="btnUndoMeasure" style="background:#FF9800; color:white;">↩️ ลบจุดล่าสุด</button>
+      <button id="btnClearMeasure" style="background:#E91E63; color:white;">🗑️ ล้างทั้งหมด</button>
+      <button id="btnExitMeasure" style="background:#555; color:white;">✕ ปิด</button>
+    </div>
+
+    <!-- แถบจัดกลุ่มด่วน -->
+    <div id="reassignPanel" class="top-floating-panel">
+      <span>🎯 จัดเข้ากลุ่ม: <select id="batchTargetGroupSelect" style="font-size:11px; padding:3px; border-radius:4px;"></select></span>
+      <span style="font-size:11px; opacity:0.85;">(คลิกแปลงเป้าหมาย)</span>
+      <button id="btnExitReassignMode" style="background:#555; color:white;">✕ ออก</button>
+    </div>
+
+    <!-- แผนที่ -->
+    <div id="map" style="width: 100%; height: 100%;"></div>
+
+  </div>
+  <!-- 🟢 จบส่วนที่แก้ไข 🟢 -->
+
+  <!-- Modal เปลี่ยนแปลงกลุ่ม (อยู่ข้างนอกสุดเหมือนเดิม) -->
+  <div id="logModal" class="modal-overlay">
+    <!-- ... (โค้ดส่วน Modal เหมือนเดิม) ... -->
   </div>
 
-  <!-- แถบจัดกลุ่มด่วน -->
-  <div id="reassignPanel" class="top-floating-panel">
-    <span>🎯 จัดเข้ากลุ่ม: <select id="batchTargetGroupSelect" style="font-size:11px; padding:3px; border-radius:4px;"></select></span>
-    <span style="font-size:11px; opacity:0.85;">(คลิกแปลงเป้าหมาย)</span>
-    <button id="btnExitReassignMode" style="background:#555; color:white;">✕ ออก</button>
-  </div>
+  <!-- Script ต่างๆ -->
 
   <div id="sidebar">
     <div class="sidebar-header">
