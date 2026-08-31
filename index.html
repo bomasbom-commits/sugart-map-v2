@@ -440,7 +440,6 @@
     /* Utils & Parsing */
     function getPlotCenterLatLng(layer) { return (layer.getBounds && layer.getBounds().isValid()) ? layer.getBounds().getCenter() : layer.getLatLng ? layer.getLatLng() : null; }
     
-    // ** แก้ไข: เพิ่มคำค้นหาคอลัมน์ผู้รับเหมาให้ครบถ้วน **
     function extractContractorName(props) {
       const contractorKeys = [
         'ชื่อ-สกุล รับเหมา', 'ชื่อผู้รับเหมา', 'ผู้รับเหมา', 'ชื่อ_สกุล_รับเหมา', 
@@ -502,11 +501,33 @@
     function processKmlXml(xmlDoc, defaultFileName) {
       let fName = defaultFileName.split('/').pop().replace(/\.kml$/i, ''), numMatch = fName.match(/\d+/), fallbackGroup = numMatch ? `กลุ่มคิว ${numMatch[0]}` : fName;
       const pMap = {}, placemarks = xmlDoc.getElementsByTagName('Placemark');
+      
       for (let i = 0; i < placemarks.length; i++) {
-        const pm = placemarks[i], data = {};
-        Array.from(pm.getElementsByTagName('SimpleData')).forEach(n => { data[n.getAttribute('name')] = n.textContent.trim(); });
-        Array.from(pm.getElementsByTagName('Data')).forEach(n => { const v = n.getElementsByTagName('value')[0]; data[n.getAttribute('name')] = v ? v.textContent.trim() : n.textContent.trim(); });
-        const nameNode = pm.getElementsByTagName('name')[0]; pMap[nameNode ? nameNode.textContent.trim() : `idx_${i}`] = data; pMap[`idx_${i}`] = data;
+        const pm = placemarks[i], pmData = {};
+        
+        Array.from(pm.getElementsByTagName('SimpleData')).forEach(n => { pmData[n.getAttribute('name')] = n.textContent.trim(); });
+        Array.from(pm.getElementsByTagName('Data')).forEach(n => { const v = n.getElementsByTagName('value')[0]; pmData[n.getAttribute('name')] = v ? v.textContent.trim() : n.textContent.trim(); });
+        
+        // ** คืนค่าระบบอ่าน HTML Table ดึงข้อมูลคุณลักษณะที่ซ่อนอยู่ (สำคัญมากสำหรับดึงชื่อผู้รับเหมา) **
+        const desc = pm.getElementsByTagName('description')[0];
+        if (desc && desc.textContent && desc.textContent.includes('<table')) {
+          try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(desc.textContent, 'text/html');
+            doc.querySelectorAll('tr').forEach(tr => {
+              const cells = tr.querySelectorAll('td, th');
+              if (cells.length >= 2) {
+                const k = cells[0].textContent.trim();
+                const v = cells[1].textContent.trim();
+                if (k && v && !pmData[k]) pmData[k] = v;
+              }
+            });
+          } catch(e){}
+        }
+
+        const nameNode = pm.getElementsByTagName('name')[0]; 
+        pMap[nameNode ? nameNode.textContent.trim() : `idx_${i}`] = pmData; 
+        pMap[`idx_${i}`] = pmData;
       }
 
       toGeoJSON.kml(xmlDoc).features.forEach((feature, idx) => {
@@ -573,7 +594,8 @@
           const sLi = document.createElement('li'); sLi.className = 'sub-node';
           sLi.innerHTML = `
             <div class="sub-header">
-              <div class="node-left"><span class="caret caret-sub">▶</span><input type="checkbox" checked class="cb-sub" data-key="${subKey}" />
+              <div class="node-left" title="${subGroup} ${cList ? '- ' + cList : ''}">
+                <span class="caret caret-sub">▶</span><input type="checkbox" checked class="cb-sub" data-key="${subKey}" />
                 <span class="color-dot" style="background:${color};" title="เปลี่ยนสี"></span><input type="color" class="color-picker-input" value="${color}">
                 <span class="sub-title-text">📁 <b>${subGroup}</b> ${cList ? `<span class="contractor-tag">- ${cList}</span>` : ''}</span>
               </div>
